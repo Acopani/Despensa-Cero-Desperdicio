@@ -11,7 +11,7 @@ class RecipeSystem {
         this.API_CONFIG = {
             SPOONACULAR: {
                 baseUrl: 'https://api.spoonacular.com',
-                apiKey: 'e8a27f4068b94e9582e78e5bca5fa29c',
+                apiKey: '2a81d1412ba54749a9b9a232c9ca4612',
                 endpoints: {
                     findByIngredients: '/recipes/findByIngredients',
                     recipeInfo: '/recipes/{id}/information'
