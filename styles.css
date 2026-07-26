@@ -224,6 +224,245 @@ button {
     position: relative;
 }
 
+/* Manual Form Styles - Task 4 */
+.manual-form-modal {
+    max-width: 600px;
+}
+
+.manual-form-content {
+    padding: 0;
+}
+
+.barcode-notice {
+    background-color: var(--warning-color);
+    color: white;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    margin: 0;
+}
+
+.barcode-notice p {
+    margin: 8px 0;
+}
+
+.barcode-notice strong {
+    font-weight: 600;
+}
+
+.manual-form {
+    padding: var(--spacing-lg);
+}
+
+.form-row {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+}
+
+/* Quantity Controls */
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quantity-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-small);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.quantity-btn:hover {
+    background-color: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.quantity-btn:active {
+    transform: scale(0.95);
+}
+
+.quantity-btn.pressed {
+    background-color: var(--primary-dark);
+    transform: scale(0.95);
+}
+
+.quantity-btn.minus {
+    background-color: var(--text-light);
+}
+
+.quantity-btn.minus:hover {
+    background-color: var(--text-color);
+}
+
+.quantity-input {
+    text-align: center;
+    font-weight: 600;
+    padding: var(--spacing-md);
+}
+
+/* Form Hints */
+.form-hint {
+    font-size: var(--font-size-sm);
+    margin-left: var(--spacing-xs);
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+.form-hint.success {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.form-hint.info {
+    color: var(--primary-color);
+}
+
+.form-hint.new {
+    color: var(--warning-color);
+}
+
+.form-hint.warning {
+    color: var(--warning-color);
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form-actions button {
+    flex: 1;
+    padding: var(--spacing-md);
+}
+
+/* Form Tips */
+.form-tips {
+    background-color: var(--bg-color);
+    padding: var(--spacing-lg);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form-tips h4 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-color);
+}
+
+.form-tips ul {
+    padding-left: var(--spacing-lg);
+    margin: 0;
+    color: var(--text-light);
+}
+
+.form-tips li {
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.5;
+}
+
+/* Form Errors */
+.form-error-container {
+    display: none;
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-error {
+    background-color: rgba(244, 67, 54, 0.1);
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-small);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.form-error strong {
+    font-weight: 600;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-close:hover {
+    background-color: rgba(244, 67, 54, 0.1);
+    border-radius: 50%;
+}
+
+/* Field Errors */
+.field-error {
+    color: var(--danger-color);
+    font-size: var(--font-size-sm);
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.form-input.error,
+.form-select.error {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.2);
+}
+
+/* Autocomplete */
+datalist {
+    display: none;
+}
+
+.form-input:focus + datalist {
+    display: block;
+}
+
+/* Loading State */
+#submit-loading {
+    display: none;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+button:disabled:hover {
+    transform: none;
+    background-color: var(--primary-color);
+}
+
 .product-card.urgent {
     border-left-color: var(--danger-color);
     background-color: rgba(244, 67, 54, 0.05);

@@ -378,105 +378,15 @@ function deleteProduct(productId) {
 // Mostrar modal para añadir producto
 function handleAddProduct() {
     console.log('Mostrar modal para añadir producto');
-    showAddProductModal();
+    openManualForm();
 }
 
-// Mostrar modal para añadir producto
+// Mostrar modal para añadir producto (alias para compatibilidad)
 function showAddProductModal() {
-    // Obtener categorías disponibles
-    const categories = window.productStorage ? window.productStorage.getCategories() : [
-        'Frutas', 'Verduras', 'Lácteos', 'Carnes', 'Panadería', 'Granos', 'Otros'
-    ];
-    
-    const categoriesOptions = categories.map(cat => 
-        `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`
-    ).join('');
-    
-    // Fecha mínima (hoy)
-    const today = new Date().toISOString().split('T')[0];
-    // Fecha sugerida (7 días desde hoy)
-    const suggestedDate = new Date();
-    suggestedDate.setDate(suggestedDate.getDate() + 7);
-    const suggestedDateStr = suggestedDate.toISOString().split('T')[0];
-    
-    const modalHTML = `
-        <div class="modal-overlay" id="add-product-modal">
-            <div class="modal">
-                <div class="modal-header">
-                    <h2 class="modal-title">Añadir Producto</h2>
-                    <button class="modal-close" onclick="closeModal()">×</button>
-                </div>
-                <div class="modal-content">
-                    <form id="add-product-form">
-                        <div class="form-group">
-                            <label for="product-name" class="form-label">Nombre del producto *</label>
-                            <input type="text" id="product-name" class="form-input" 
-                                   placeholder="Ej: Manzanas, Leche, Pan..." required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="product-quantity" class="form-label">Cantidad</label>
-                            <input type="number" id="product-quantity" class="form-input" 
-                                   value="1" min="1" max="999">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="product-category" class="form-label">Categoría</label>
-                            <select id="product-category" class="form-select">
-                                ${categoriesOptions}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="expiry-date" class="form-label">Fecha de caducidad</label>
-                            <input type="date" id="expiry-date" class="form-input" 
-                                   min="${today}" value="${suggestedDateStr}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="product-notes" class="form-label">Notas (opcional)</label>
-                            <textarea id="product-notes" class="form-input" 
-                                      rows="3" placeholder="Ej: Comprado en..., Guardar en refrigerador..."></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="product-barcode" class="form-label">Código de barras (opcional)</label>
-                            <input type="text" id="product-barcode" class="form-input" 
-                                   placeholder="1234567890123">
-                        </div>
-                        
-                        <div style="display: flex; gap: 12px; margin-top: 24px;">
-                            <button type="button" class="btn-secondary" onclick="closeModal()" style="flex: 1;">
-                                Cancelar
-                            </button>
-                            <button type="submit" class="btn-primary" style="flex: 2;">
-                                Guardar Producto
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Insertar modal en el contenedor
-    const modalsContainer = document.getElementById('modals-container');
-    modalsContainer.innerHTML = modalHTML;
-    
-    // Asignar evento al formulario
-    const form = document.getElementById('add-product-form');
-    form.addEventListener('submit', handleAddProductSubmit);
-    
-    // Guardar referencia al modal actual
-    currentModal = 'add-product-modal';
-    
-    // Enfocar el primer campo
-    setTimeout(() => {
-        document.getElementById('product-name').focus();
-    }, 100);
+    openManualForm();
 }
 
-// Mostrar modal para editar producto
+// Mostrar modal para editar producto (simplificado - abre formulario manual con datos)
 function showEditProductModal(productId) {
     const product = window.productStorage.getById(productId);
     if (!product) {
@@ -484,14 +394,7 @@ function showEditProductModal(productId) {
         return;
     }
     
-    // Obtener categorías disponibles
-    const categories = window.productStorage.getCategories();
-    const categoriesOptions = categories.map(cat => 
-        `<option value="${escapeHtml(cat)}" ${cat === product.category ? 'selected' : ''}>
-            ${escapeHtml(cat)}
-        </option>`
-    ).join('');
-    
+    // Crear un formulario simple de edición
     const modalHTML = `
         <div class="modal-overlay" id="edit-product-modal">
             <div class="modal">
@@ -500,47 +403,23 @@ function showEditProductModal(productId) {
                     <button class="modal-close" onclick="closeModal()">×</button>
                 </div>
                 <div class="modal-content">
-                    <form id="edit-product-form" data-id="${productId}">
-                        <div class="form-group">
-                            <label for="edit-product-name" class="form-label">Nombre del producto *</label>
-                            <input type="text" id="edit-product-name" class="form-input" 
-                                   value="${escapeHtml(product.name)}" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-product-quantity" class="form-label">Cantidad</label>
-                            <input type="number" id="edit-product-quantity" class="form-input" 
-                                   value="${product.quantity}" min="1" max="999">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-product-category" class="form-label">Categoría</label>
-                            <select id="edit-product-category" class="form-select">
-                                ${categoriesOptions}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-expiry-date" class="form-label">Fecha de caducidad</label>
-                            <input type="date" id="edit-expiry-date" class="form-input" 
-                                   value="${product.expiryDate || ''}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="edit-product-notes" class="form-label">Notas (opcional)</label>
-                            <textarea id="edit-product-notes" class="form-input" 
-                                      rows="3">${escapeHtml(product.notes || '')}</textarea>
-                        </div>
-                        
-                        <div style="display: flex; gap: 12px; margin-top: 24px;">
-                            <button type="button" class="btn-secondary" onclick="closeModal()" style="flex: 1;">
+                    <div style="text-align: center; padding: var(--spacing-xl);">
+                        <p style="margin-bottom: var(--spacing-lg);">
+                            Estás editando: <strong>${escapeHtml(product.name)}</strong>
+                        </p>
+                        <p style="color: var(--text-light); margin-bottom: var(--spacing-xl);">
+                            La funcionalidad completa de edición estará disponible en la siguiente versión.
+                            Por ahora, puedes eliminar y volver a añadir el producto.
+                        </p>
+                        <div style="display: flex; gap: var(--spacing-md); justify-content: center;">
+                            <button class="btn-secondary" onclick="closeModal()">
                                 Cancelar
                             </button>
-                            <button type="submit" class="btn-primary" style="flex: 2;">
-                                Actualizar Producto
+                            <button class="btn-primary" onclick="editProductByReadding(${JSON.stringify(productId)})">
+                                Editar (Beta)
                             </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -550,98 +429,38 @@ function showEditProductModal(productId) {
     const modalsContainer = document.getElementById('modals-container');
     modalsContainer.innerHTML = modalHTML;
     
-    // Asignar evento al formulario
-    const form = document.getElementById('edit-product-form');
-    form.addEventListener('submit', (e) => handleEditProductSubmit(e, productId));
-    
     // Guardar referencia al modal actual
     currentModal = 'edit-product-modal';
 }
 
-// Manejar envío del formulario de añadir producto
-function handleAddProductSubmit(event) {
-    event.preventDefault();
-    
-    try {
-        const formData = {
-            name: document.getElementById('product-name').value.trim(),
-            quantity: document.getElementById('product-quantity').value,
-            category: document.getElementById('product-category').value,
-            expiryDate: document.getElementById('expiry-date').value,
-            notes: document.getElementById('product-notes').value.trim(),
-            barcode: document.getElementById('product-barcode').value.trim() || null
-        };
-        
-        // Validar campos requeridos
-        if (!formData.name) {
-            showError('El nombre del producto es requerido');
-            return;
-        }
-        
-        // Añadir producto usando storage
-        const newProduct = window.productStorage.add(formData);
-        
-        // Actualizar lista local
-        products.push(newProduct);
-        
-        // Actualizar interfaz
-        updateSummary();
-        renderProductsList();
-        
-        // Cerrar modal y mostrar mensaje
-        closeModal();
-        showToast(`Producto "${formData.name}" añadido correctamente`);
-        
-        console.log('Producto añadido:', newProduct);
-        
-    } catch (error) {
-        console.error('Error añadiendo producto:', error);
-        showError(error.message || 'Error al añadir el producto');
+// Función temporal para editar producto (beta)
+function editProductByReadding(productId) {
+    const product = window.productStorage.getById(productId);
+    if (!product) {
+        showError('Producto no encontrado');
+        return;
     }
-}
-
-// Manejar envío del formulario de editar producto
-function handleEditProductSubmit(event, productId) {
-    event.preventDefault();
     
-    try {
-        const formData = {
-            name: document.getElementById('edit-product-name').value.trim(),
-            quantity: document.getElementById('edit-product-quantity').value,
-            category: document.getElementById('edit-product-category').value,
-            expiryDate: document.getElementById('edit-expiry-date').value,
-            notes: document.getElementById('edit-product-notes').value.trim()
-        };
-        
-        // Validar campos requeridos
-        if (!formData.name) {
-            showError('El nombre del producto es requerido');
-            return;
+    // Cerrar modal actual
+    closeModal();
+    
+    // Eliminar producto actual
+    window.productStorage.remove(productId);
+    
+    // Abrir formulario manual con datos del producto
+    setTimeout(() => {
+        if (typeof window.openManualForm === 'function') {
+            window.openManualForm(product.barcode, {
+                name: product.name,
+                quantity: product.quantity,
+                category: product.category,
+                expiryDate: product.expiryDate,
+                notes: product.notes
+            });
+        } else {
+            showError('Funcionalidad de edición no disponible temporalmente');
         }
-        
-        // Actualizar producto usando storage
-        const updatedProduct = window.productStorage.update(productId, formData);
-        
-        // Actualizar producto en lista local
-        const productIndex = products.findIndex(p => p.id === productId);
-        if (productIndex !== -1) {
-            products[productIndex] = updatedProduct;
-        }
-        
-        // Actualizar interfaz
-        updateSummary();
-        renderProductsList();
-        
-        // Cerrar modal y mostrar mensaje
-        closeModal();
-        showToast(`Producto "${formData.name}" actualizado correctamente`);
-        
-        console.log('Producto actualizado:', updatedProduct);
-        
-    } catch (error) {
-        console.error('Error actualizando producto:', error);
-        showError(error.message || 'Error al actualizar el producto');
-    }
+    }, 300);
 }
 
 // Cerrar modal actual

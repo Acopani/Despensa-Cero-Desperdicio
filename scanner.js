@@ -464,73 +464,14 @@ class BarcodeScanner {
     
     // Mostrar formulario con datos pre-llenados
     showProductFormWithData(barcode, productData) {
-        // Usar la función de añadir producto de la app principal
-        if (typeof window.despensaApp !== 'undefined' && window.despensaApp.showAddProductModal) {
-            // Primero mostrar el modal normal
-            window.despensaApp.showAddProductModal();
-            
-            // Luego pre-llenar los campos
-            setTimeout(() => {
-                this.fillFormWithProductData(barcode, productData);
-            }, 100);
+        // Usar el formulario manual con datos pre-llenados
+        if (typeof window.openManualForm === 'function') {
+            window.openManualForm(barcode, productData);
+        } else if (typeof window.manualForm !== 'undefined') {
+            window.manualForm.showManualForm({ barcode, ...productData });
         } else {
-            // Fallback: mostrar modal manual
+            // Fallback: mostrar modal básico
             this.showManualEntry(barcode, productData);
-        }
-    }
-    
-    // Pre-llenar formulario con datos del producto
-    fillFormWithProductData(barcode, productData) {
-        const nameInput = document.getElementById('product-name');
-        const barcodeInput = document.getElementById('product-barcode');
-        const categorySelect = document.getElementById('product-category');
-        const notesTextarea = document.getElementById('product-notes');
-        
-        if (nameInput) {
-            nameInput.value = productData.name || '';
-            nameInput.focus();
-        }
-        
-        if (barcodeInput) {
-            barcodeInput.value = barcode || '';
-        }
-        
-        if (categorySelect && productData.category) {
-            // Buscar opción que coincida con la categoría
-            for (let option of categorySelect.options) {
-                if (option.value.toLowerCase() === productData.category.toLowerCase()) {
-                    categorySelect.value = option.value;
-                    break;
-                }
-            }
-            
-            // Si no se encuentra, añadir como nueva opción
-            if (categorySelect.value !== productData.category) {
-                const newOption = document.createElement('option');
-                newOption.value = productData.category;
-                newOption.textContent = productData.category;
-                categorySelect.appendChild(newOption);
-                categorySelect.value = productData.category;
-            }
-        }
-        
-        if (notesTextarea && productData.notes) {
-            let notes = productData.notes;
-            
-            if (productData.brand) {
-                notes = `Marca: ${productData.brand}\n${notes}`;
-            }
-            
-            if (productData.quantity && productData.quantity !== '1') {
-                notes = `Cantidad del envase: ${productData.quantity}\n${notes}`;
-            }
-            
-            notesTextarea.value = notes;
-        }
-        
-        // Mostrar notificación
-        if (window.despensaApp && window.despensaApp.showToast) {
-            window.despensaApp.showToast(`Datos de ${productData.name} cargados automáticamente`);
         }
     }
     
@@ -579,28 +520,13 @@ class BarcodeScanner {
     showManualEntry(barcode = null, productData = null) {
         this.closeScanner();
         
-        // Usar la función de añadir producto de la app principal
-        if (typeof window.despensaApp !== 'undefined' && window.despensaApp.showAddProductModal) {
-            window.despensaApp.showAddProductModal();
-            
-            // Si hay código de barras, pre-llenarlo
-            if (barcode) {
-                setTimeout(() => {
-                    const barcodeInput = document.getElementById('product-barcode');
-                    if (barcodeInput) {
-                        barcodeInput.value = barcode;
-                    }
-                    
-                    // Si hay datos adicionales, pre-llenar nombre
-                    if (productData && productData.name) {
-                        const nameInput = document.getElementById('product-name');
-                        if (nameInput) {
-                            nameInput.value = productData.name;
-                            nameInput.focus();
-                        }
-                    }
-                }, 100);
-            }
+        // Usar el formulario manual
+        if (typeof window.openManualForm === 'function') {
+            window.openManualForm(barcode, productData);
+        } else if (typeof window.manualForm !== 'undefined') {
+            const data = productData || {};
+            if (barcode) data.barcode = barcode;
+            window.manualForm.showManualForm(data);
         } else {
             // Fallback básico
             alert(`Código de barras: ${barcode || 'No detectado'}\nPor favor, ingresa los datos del producto manualmente.`);
