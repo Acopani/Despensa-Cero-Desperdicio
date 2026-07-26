@@ -719,8 +719,8 @@ function showError(message) {
 // Manejar botones de navegación
 function setupNavigation() {
     scanBtn.addEventListener('click', () => {
-        console.log('Escanear código de barras');
-        showToast('Funcionalidad de escaneo disponible en Task 3');
+        console.log('Abrir escáner de código de barras');
+        openScanner();
     });
     
     homeBtn.addEventListener('click', () => {
