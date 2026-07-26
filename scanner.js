@@ -216,6 +216,12 @@ class BarcodeScanner {
     
     // Manejar éxito en escaneo
     async handleScanSuccess(barcode) {
+        // Verificar que el escáner esté activo
+        if (!this.isScanning) {
+            console.log('Escaneo ignorado (scanner no activo)');
+            return;
+        }
+        
         // Evitar múltiples escaneos rápidos
         const now = Date.now();
         if (now - this.lastScanTime < this.scanCooldown) {
