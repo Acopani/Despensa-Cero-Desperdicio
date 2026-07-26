@@ -68,38 +68,121 @@ class RecipesUI {
             }
 
             if (recipes.length === 0) {
-                // Usar fallback si no hay resultados
                 if (window.recipeSystem) {
                     recipes = window.recipeSystem.getFallbackRecipes();
                 }
             }
 
             this.isLoading = false;
-            this.renderRecipesList(recipes);
+            
+            // Mostrar resumen de inventario + recetas
+            this.renderSuggestionsWithInventory(recipes);
 
         } catch (error) {
             console.error('❌ Error cargando sugerencias:', error);
             this.isLoading = false;
 
+            if (window.recipeSystem) {
+                const fallback = window.recipeSystem.getFallbackRecipes();
+                this.renderSuggestionsWithInventory(fallback);
+            }
+        }
+    }
+
+    /**
+     * Renderizar sugerencias mostrando el inventario actual
+     */
+    renderSuggestionsWithInventory(recipes) {
+        const contentEl = document.getElementById('recipes-content');
+        if (!contentEl) return;
+
+        // Obtener inventario actual
+        let inventoryHTML = '';
+        if (window.productStorage) {
+            const products = window.productStorage.getAllProducts();
+            if (products.length > 0) {
+                const productNames = products.map(p => p.name).slice(0, 10);
+                inventoryHTML = `
+                    <div class="inventory-summary">
+                        <h4>📦 Tu despensa tiene:</h4>
+                        <div class="inventory-chips">
+                            ${productNames.map(name => `<span class="inventory-chip">${name}</span>`).join('')}
+                            ${products.length > 10 ? `<span class="inventory-chip more">+${products.length - 10} más</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                inventoryHTML = `
+                    <div class="inventory-summary empty">
+                        <p>📦 Tu despensa está vacía. Añade productos para recibir mejores sugerencias.</p>
+                    </div>
+                `;
+            }
+        }
+
+        if (!recipes || recipes.length === 0) {
             contentEl.innerHTML = `
+                ${inventoryHTML}
                 <div class="recipes-empty">
-                    <div class="empty-icon">🔌</div>
-                    <h3>Error al cargar recetas</h3>
-                    <p>No se pudieron obtener sugerencias. Mostrando recetas de ejemplo.</p>
-                    <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
-                        🔄 Reintentar
-                    </button>
+                    <div class="empty-icon">🍽️</div>
+                    <h3>No hay recetas disponibles</h3>
+                    <p>Añade productos a tu despensa para recibir sugerencias.</p>
                 </div>
             `;
-
-            // Mostrar fallback después de un momento
-            setTimeout(() => {
-                if (window.recipeSystem) {
-                    const fallback = window.recipeSystem.getFallbackRecipes();
-                    this.renderRecipesList(fallback);
-                }
-            }, 1000);
+            return;
         }
+
+        let html = inventoryHTML;
+        html += `<div class="recipes-count">${recipes.length} recetas encontradas</div>`;
+        html += `<div class="recipes-list">`;
+
+        recipes.forEach(recipe => {
+            const isFav = window.recipeSystem ? window.recipeSystem.isFavorite(recipe.id) : false;
+            const matchColor = recipe.matchingPercentage >= 70 ? '#4CAF50' : 
+                              recipe.matchingPercentage >= 40 ? '#FF9800' : '#9E9E9E';
+
+            html += `
+                <div class="recipe-card" onclick="window.recipesUI.showRecipeDetail('${recipe.id}')">
+                    <div class="recipe-card-image">
+                        <img src="${recipe.image}" alt="${recipe.title}" loading="lazy"
+                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22300%22><rect fill=%22%23f5f5f5%22 width=%22400%22 height=%22300%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 font-size=%2250%22>🍽️</text></svg>'">
+                        ${recipe.matchingPercentage > 0 ? `
+                            <div class="recipe-match-badge" style="background-color: ${matchColor}">
+                                ${recipe.matchingPercentage}% tienes
+                            </div>
+                        ` : ''}
+                        <button class="recipe-fav-btn ${isFav ? 'active' : ''}" 
+                                onclick="event.stopPropagation(); window.recipesUI.toggleFavorite('${recipe.id}')">
+                            ${isFav ? '⭐' : '☆'}
+                        </button>
+                    </div>
+                    <div class="recipe-card-body">
+                        <h3 class="recipe-title">${recipe.title}</h3>
+                        <p class="recipe-desc">${recipe.description}</p>
+                        <div class="recipe-meta">
+                            <span class="recipe-time">⏱️ ${recipe.readyInMinutes} min</span>
+                            <span class="recipe-difficulty">📊 ${recipe.difficulty}</span>
+                            <span class="recipe-servings">👥 ${recipe.servings}</span>
+                        </div>
+                        ${recipe.matchingIngredients && recipe.matchingIngredients.length > 0 ? `
+                            <div class="recipe-matching">
+                                <span class="match-label">✅ Tienes:</span>
+                                ${recipe.matchingIngredients.slice(0, 3).map(i => `<span class="match-chip">${i}</span>`).join('')}
+                                ${recipe.matchingIngredients.length > 3 ? `<span class="match-chip more">+${recipe.matchingIngredients.length - 3}</span>` : ''}
+                            </div>
+                        ` : ''}
+                        <div class="recipe-tags">
+                            ${recipe.vegetarian ? '<span class="recipe-tag vegetarian">🥬 Vegetariana</span>' : ''}
+                            ${recipe.vegan ? '<span class="recipe-tag vegan">🌱 Vegana</span>' : ''}
+                            ${recipe.glutenFree ? '<span class="recipe-tag gluten-free">🌾 Sin Gluten</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        contentEl.innerHTML = html;
     }
 
     /**
@@ -925,6 +1008,89 @@ class RecipesUI {
                 font-size: 15px;
                 cursor: pointer;
                 font-weight: 500;
+            }
+
+            /* Inventory Summary */
+            .inventory-summary {
+                background: white;
+                border-radius: 12px;
+                padding: 14px 16px;
+                margin-bottom: 12px;
+                border-left: 4px solid #4CAF50;
+            }
+
+            .inventory-summary.empty {
+                border-left-color: #FF9800;
+            }
+
+            .inventory-summary h4 {
+                margin: 0 0 8px;
+                font-size: 14px;
+                color: #333;
+            }
+
+            .inventory-chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .inventory-chip {
+                background: #E8F5E9;
+                color: #2E7D32;
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .inventory-chip.more {
+                background: #f0f0f0;
+                color: #666;
+            }
+
+            .recipes-count {
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 12px;
+                padding-left: 4px;
+            }
+
+            .recipe-desc {
+                font-size: 13px;
+                color: #666;
+                margin: 4px 0 8px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .recipe-matching {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 4px;
+                margin: 6px 0;
+            }
+
+            .match-label {
+                font-size: 11px;
+                color: #2E7D32;
+                font-weight: 600;
+            }
+
+            .match-chip {
+                background: #E8F5E9;
+                color: #2E7D32;
+                padding: 2px 8px;
+                border-radius: 8px;
+                font-size: 11px;
+            }
+
+            .match-chip.more {
+                background: #f0f0f0;
+                color: #666;
             }
         `;
         document.head.appendChild(style);
