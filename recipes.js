@@ -150,6 +150,18 @@ Solo el JSON, nada más.`;
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Error respuesta API:', errorText);
+                
+                // Detectar rate limit
+                if (response.status === 429) {
+                    const retryMatch = errorText.match(/retry in (\d+)/i);
+                    const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 60;
+                    console.warn(`⏳ Rate limit alcanzado. Reintentar en ${retrySeconds}s`);
+                    
+                    // Guardar info de rate limit
+                    this.rateLimitedUntil = Date.now() + (retrySeconds * 1000);
+                    throw new Error(`RATE_LIMIT:${retrySeconds}`);
+                }
+                
                 throw new Error(`Gemini API error ${response.status}: ${errorText}`);
             }
 

@@ -72,22 +72,46 @@ class RecipesUI {
             if (recipes.length === 0) {
                 const contentEl2 = document.getElementById('recipes-content');
                 if (contentEl2) {
-                    contentEl2.innerHTML = `
-                        ${this.getInventoryHTML()}
-                        <div class="recipes-empty">
-                            <div class="empty-icon">⚠️</div>
-                            <h3>No se pudieron generar recetas</h3>
-                            <p>Verifica la consola (F12) para ver el error. Posibles causas:</p>
-                            <ul style="text-align:left; margin: 12px auto; max-width: 300px; font-size: 14px; color: #666;">
-                                <li>API key inválida en env.js</li>
-                                <li>Sin conexión a internet</li>
-                                <li>Límite de API excedido</li>
-                            </ul>
-                            <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
-                                🔄 Reintentar
-                            </button>
-                        </div>
-                    `;
+                    // Detectar si fue rate limit
+                    const isRateLimit = window.recipeSystem && window.recipeSystem.rateLimitedUntil && 
+                                       window.recipeSystem.rateLimitedUntil > Date.now();
+                    
+                    if (isRateLimit) {
+                        const waitSecs = Math.ceil((window.recipeSystem.rateLimitedUntil - Date.now()) / 1000);
+                        contentEl2.innerHTML = `
+                            ${this.getInventoryHTML()}
+                            <div class="recipes-empty">
+                                <div class="empty-icon">⏳</div>
+                                <h3>Límite de API alcanzado</h3>
+                                <p>Has agotado las solicitudes gratuitas de Gemini por hoy. La cuota se reinicia en unas horas.</p>
+                                <p style="font-size:13px; color:#666; margin-top:8px;">
+                                    Opciones:<br>
+                                    • Espera a que se reinicie (generalmente 24h)<br>
+                                    • Crea una nueva API key en <a href="https://aistudio.google.com/app/apikey" target="_blank">AI Studio</a> con un proyecto nuevo
+                                </p>
+                                <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()" style="margin-top:16px">
+                                    🔄 Reintentar
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        contentEl2.innerHTML = `
+                            ${this.getInventoryHTML()}
+                            <div class="recipes-empty">
+                                <div class="empty-icon">⚠️</div>
+                                <h3>No se pudieron generar recetas</h3>
+                                <p>Verifica la consola (F12) para ver el error. Posibles causas:</p>
+                                <ul style="text-align:left; margin: 12px auto; max-width: 300px; font-size: 14px; color: #666;">
+                                    <li>API key inválida en env.js</li>
+                                    <li>Sin conexión a internet</li>
+                                    <li>Límite de API excedido</li>
+                                </ul>
+                                <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
+                                    🔄 Reintentar
+                                </button>
+                            </div>
+                        `;
+                    }
                 }
                 return;
             }
