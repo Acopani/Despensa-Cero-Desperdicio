@@ -75,9 +75,14 @@ class RecipeSystem {
         if (recipes.length > 0) {
             this.cacheRecipes(cacheKey, recipes);
             this.currentRecipes = recipes;
+            return recipes;
         }
 
-        return recipes;
+        // Fallback: generar recetas locales inteligentes
+        console.log('🔄 Usando generador local de recetas...');
+        const localRecipes = this.generateLocalRecipes(products);
+        this.currentRecipes = localRecipes;
+        return localRecipes;
     }
 
     /**
@@ -369,6 +374,163 @@ Solo el JSON, nada más.`;
             localStorage.setItem(this.STORAGE_KEYS.FAVORITE_RECIPES, JSON.stringify(this.favoriteRecipes));
             localStorage.setItem(this.STORAGE_KEYS.SHOPPING_LIST, JSON.stringify(this.shoppingList));
         } catch (e) { console.error('Storage error:', e); }
+    }
+
+    /**
+     * Generador local inteligente de recetas (fallback cuando Gemini no está disponible)
+     * Combina ingredientes del usuario con una base de conocimiento de recetas comunes
+     */
+    generateLocalRecipes(products) {
+        const ingredientes = products.map(p => p.name.toLowerCase().trim());
+        const recetas = [];
+
+        // Base de conocimiento: combinaciones de ingredientes → recetas
+        const recetaBase = [
+            {
+                requiere: ['leche'],
+                title: 'Leche con Canela y Miel',
+                description: 'Bebida reconfortante, ideal para antes de dormir.',
+                readyInMinutes: 5, servings: 1, difficulty: 'Fácil',
+                ingredients: ['1 taza de leche', 'Una pizca de canela', '1 cucharada de miel'],
+                instructions: ['Calentar la leche sin hervir', 'Agregar canela y miel', 'Mezclar bien y servir caliente'],
+                vegetarian: true, glutenFree: true, tips: 'Puedes usar leche vegetal como alternativa.'
+            },
+            {
+                requiere: ['pan'],
+                title: 'Tostadas con Aceite y Sal',
+                description: 'Tostadas crujientes al estilo mediterráneo.',
+                readyInMinutes: 5, servings: 2, difficulty: 'Fácil',
+                ingredients: ['4 rebanadas de pan', 'Aceite de oliva', 'Sal', 'Tomate rallado (opcional)'],
+                instructions: ['Tostar el pan', 'Rociar con aceite de oliva', 'Añadir sal y tomate rallado si tienes'],
+                vegetarian: true, glutenFree: false, tips: 'Ideal para acompañar cualquier comida.'
+            },
+            {
+                requiere: ['tomate'],
+                title: 'Tomates Aliñados',
+                description: 'Ensalada sencilla de tomates frescos con aliño clásico.',
+                readyInMinutes: 10, servings: 2, difficulty: 'Fácil',
+                ingredients: ['3 tomates maduros', 'Aceite de oliva', 'Vinagre', 'Sal', 'Orégano'],
+                instructions: ['Lavar y cortar los tomates en rodajas', 'Aliñar con aceite, vinagre y sal', 'Espolvorear orégano', 'Dejar reposar 5 minutos'],
+                vegetarian: true, glutenFree: true, tips: 'Mejor con tomates a temperatura ambiente.'
+            },
+            {
+                requiere: ['tortilla'],
+                title: 'Quesadillas Rápidas',
+                description: 'Tortillas dobladas y tostadas, rellenas de lo que tengas.',
+                readyInMinutes: 10, servings: 2, difficulty: 'Fácil',
+                ingredients: ['4 tortillas', 'Queso rallado o en rebanadas', 'Aceite', 'Sal'],
+                instructions: ['Calentar sartén con un poco de aceite', 'Colocar tortilla y añadir relleno', 'Doblar y cocinar 2 min por lado', 'Cortar en triángulos y servir'],
+                vegetarian: true, glutenFree: false, tips: 'Añade cualquier sobra que tengas: jamón, verduras, frijoles.'
+            },
+            {
+                requiere: ['leche', 'pan'],
+                title: 'Torrijas (Pan Francés)',
+                description: 'Pan remojado en leche y huevo, dorado en sartén. Un clásico.',
+                readyInMinutes: 15, servings: 4, difficulty: 'Fácil',
+                ingredients: ['8 rebanadas de pan (mejor si es del día anterior)', '2 tazas de leche', '2 huevos', 'Azúcar y canela', 'Aceite para freír'],
+                instructions: ['Calentar leche con canela y azúcar', 'Remojar rebanadas de pan en la leche', 'Pasar por huevo batido', 'Freír en aceite caliente hasta dorar', 'Espolvorear con azúcar y canela'],
+                vegetarian: true, glutenFree: false, tips: 'Mejor con pan del día anterior que absorbe más.'
+            },
+            {
+                requiere: ['tomate', 'tortilla'],
+                title: 'Chilaquiles Rojos',
+                description: 'Tortillas en salsa de tomate, un desayuno mexicano clásico.',
+                readyInMinutes: 20, servings: 3, difficulty: 'Fácil',
+                ingredients: ['6 tortillas cortadas en triángulos', '4 tomates', '1/4 cebolla', '1 diente de ajo', 'Aceite', 'Sal', 'Crema y queso (opcional)'],
+                instructions: ['Freír los triángulos de tortilla hasta dorar', 'Licuar tomates con cebolla, ajo y sal', 'Hervir la salsa 5 minutos', 'Añadir las tortillas fritas a la salsa', 'Servir con crema y queso si tienes'],
+                vegetarian: true, glutenFree: true, tips: 'Añade un huevo estrellado encima para hacerlo más completo.'
+            },
+            {
+                requiere: ['leche', 'tortilla'],
+                title: 'Enfrijoladas con Crema de Leche',
+                description: 'Tortillas bañadas en salsa cremosa, fáciles y deliciosas.',
+                readyInMinutes: 15, servings: 2, difficulty: 'Fácil',
+                ingredients: ['4 tortillas', '1 taza de leche', 'Frijoles (si tienes)', 'Sal', 'Queso rallado'],
+                instructions: ['Calentar las tortillas en sartén', 'Mezclar leche con un poco de sal (o frijoles licuados)', 'Bañar las tortillas con la mezcla', 'Enrollar y servir con queso encima'],
+                vegetarian: true, glutenFree: true, tips: 'Si no tienes frijoles, la crema de leche con sal es una alternativa simple.'
+            },
+            {
+                requiere: ['pan', 'tomate'],
+                title: 'Bruschetta de Tomate',
+                description: 'Pan tostado con tomate fresco picado al estilo italiano.',
+                readyInMinutes: 10, servings: 4, difficulty: 'Fácil',
+                ingredients: ['4 rebanadas de pan', '3 tomates picados', '1 diente de ajo', 'Aceite de oliva', 'Sal y albahaca'],
+                instructions: ['Tostar el pan', 'Frotar con ajo crudo', 'Picar tomates en cubos pequeños', 'Mezclar con aceite, sal y albahaca', 'Colocar sobre el pan tostado'],
+                vegetarian: true, glutenFree: false, tips: 'Añade un chorrito de vinagre balsámico si tienes.'
+            },
+            {
+                requiere: ['manzana', 'leche'],
+                title: 'Batido de Manzana',
+                description: 'Smoothie cremoso de manzana con leche, ideal para el desayuno.',
+                readyInMinutes: 5, servings: 2, difficulty: 'Fácil',
+                ingredients: ['2 manzanas peladas', '1 taza de leche', '1 cda de miel o azúcar', 'Canela al gusto', 'Hielo (opcional)'],
+                instructions: ['Pelar y cortar las manzanas', 'Licuar con leche, miel y canela', 'Añadir hielo si deseas', 'Servir inmediatamente'],
+                vegetarian: true, glutenFree: true, tips: 'También queda bien con un poco de avena para más consistencia.'
+            },
+            {
+                requiere: ['manzana'],
+                title: 'Manzanas Asadas con Canela',
+                description: 'Postre sencillo y saludable de manzanas caramelizadas.',
+                readyInMinutes: 20, servings: 2, difficulty: 'Fácil',
+                ingredients: ['2 manzanas', '2 cdas de azúcar o miel', 'Canela en polvo', 'Un poco de mantequilla o aceite'],
+                instructions: ['Cortar manzanas en gajos', 'Calentar sartén con mantequilla', 'Añadir manzanas y azúcar', 'Cocinar 10 min a fuego medio', 'Espolvorear canela y servir'],
+                vegetarian: true, glutenFree: true, tips: 'Sirve con yogur o helado de vainilla.'
+            },
+            {
+                requiere: ['pan', 'leche', 'tomate'],
+                title: 'Sopa de Tomate con Pan',
+                description: 'Sopa caliente de tomate espesada con pan, reconfortante y fácil.',
+                readyInMinutes: 20, servings: 3, difficulty: 'Fácil',
+                ingredients: ['4 tomates', '2 rebanadas de pan', '1 taza de leche', '1 diente de ajo', 'Aceite', 'Sal y pimienta'],
+                instructions: ['Sofreír ajo en aceite', 'Añadir tomates cortados y cocinar 10 min', 'Añadir pan troceado y leche', 'Triturar todo junto', 'Salpimentar y servir caliente'],
+                vegetarian: true, glutenFree: false, tips: 'El pan del día anterior espesa mejor la sopa.'
+            },
+            {
+                requiere: ['tortilla', 'tomate', 'leche'],
+                title: 'Enchiladas Suizas Caseras',
+                description: 'Tortillas rellenas bañadas en salsa de tomate con crema.',
+                readyInMinutes: 25, servings: 3, difficulty: 'Media',
+                ingredients: ['6 tortillas', '4 tomates', '1/2 taza de leche', 'Queso rallado', 'Sal', 'Crema (o más leche)'],
+                instructions: ['Licuar tomates con sal', 'Hervir la salsa 5 minutos', 'Mezclar un poco de leche para suavizar', 'Pasar tortillas por la salsa', 'Enrollar y colocar en refractario', 'Bañar con salsa restante y queso', 'Hornear 10 min o calentar en microondas'],
+                vegetarian: true, glutenFree: true, tips: 'Rellena con pollo desmenuzado o frijoles si tienes.'
+            }
+        ];
+
+        // Encontrar recetas que coincidan con los ingredientes disponibles
+        recetaBase.forEach(receta => {
+            const matches = receta.requiere.filter(req => 
+                ingredientes.some(ing => ing.includes(req) || req.includes(ing))
+            );
+
+            if (matches.length === receta.requiere.length) {
+                recetas.push({
+                    id: `local-${Date.now()}-${recetas.length}`,
+                    title: receta.title,
+                    description: receta.description,
+                    image: '',
+                    readyInMinutes: receta.readyInMinutes,
+                    servings: receta.servings,
+                    difficulty: receta.difficulty,
+                    ingredients: receta.ingredients,
+                    ingredientsList: receta.requiere,
+                    instructions: receta.instructions,
+                    sourceUrl: '',
+                    vegetarian: receta.vegetarian || false,
+                    vegan: receta.vegan || false,
+                    glutenFree: receta.glutenFree || false,
+                    tips: receta.tips || '',
+                    matchingPercentage: 100,
+                    matchingIngredients: matches,
+                    missingIngredients: []
+                });
+            }
+        });
+
+        // Ordenar: primero las que usan más ingredientes
+        recetas.sort((a, b) => b.ingredientsList.length - a.ingredientsList.length);
+
+        console.log(`✅ ${recetas.length} recetas generadas localmente`);
+        return recetas;
     }
 }
 
