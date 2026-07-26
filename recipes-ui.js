@@ -24,7 +24,7 @@ class RecipesUI {
         modalsContainer.innerHTML = `
             <div class="modal recipes-modal" id="recipes-modal">
                 <div class="modal-header recipes-header">
-                    <h2 class="modal-title">🍳 Recetas Sugeridas</h2>
+                    <h2 class="modal-title">🤖 Recetas con IA</h2>
                     <button class="modal-close" onclick="window.recipesUI.closeRecipes()">×</button>
                 </div>
                 <div class="recipes-tabs">
@@ -41,7 +41,7 @@ class RecipesUI {
                 <div class="modal-content recipes-content" id="recipes-content">
                     <div class="recipes-loading">
                         <div class="loading-spinner"></div>
-                        <p>Analizando tu despensa y buscando recetas...</p>
+                        <p>🤖 La IA está analizando tu despensa y creando recetas personalizadas...</p>
                     </div>
                 </div>
             </div>
@@ -335,6 +335,12 @@ class RecipesUI {
                     <a href="${recipe.sourceUrl}" target="_blank" rel="noopener noreferrer" class="recipe-source-link">
                         🔗 Ver receta original
                     </a>
+                </div>` : ''}
+
+                ${recipe.tips ? `
+                <div class="recipe-detail-section">
+                    <h3>💡 Consejo del Chef IA</h3>
+                    <p class="recipe-tip">${recipe.tips}</p>
                 </div>` : ''}
             </div>
         `;
@@ -915,6 +921,15 @@ class RecipesUI {
                 color: #FF9800;
                 text-decoration: none;
                 font-weight: 500;
+            }
+
+            .recipe-tip {
+                background: #FFF8E1;
+                padding: 12px;
+                border-radius: 8px;
+                border-left: 3px solid #FF9800;
+                font-style: italic;
+                color: #555;
             }
 
             /* Shopping List */

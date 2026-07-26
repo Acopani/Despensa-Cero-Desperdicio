@@ -1,22 +1,11 @@
 /**
- * Sistema de Recetas Basadas en Inventario
- * Task 6: Generación de recetas usando productos disponibles en la despensa
- * 
- * Usa Spoonacular API como fuente principal de recetas
+ * Sistema de Recetas con IA (Google Gemini)
+ * Genera recetas personalizadas en español basadas en el inventario real
  */
 
 class RecipeSystem {
     constructor() {
-        this.API_CONFIG = {
-            SPOONACULAR: {
-                baseUrl: 'https://api.spoonacular.com',
-                apiKey: '2a81d1412ba54749a9b9a232c9ca4612',
-                endpoints: {
-                    findByIngredients: '/recipes/findByIngredients',
-                    recipeInfo: '/recipes/{id}/information'
-                }
-            }
-        };
+        this.GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
         this.STORAGE_KEYS = {
             RECIPE_CACHE: 'despensa-recipes-cache',
@@ -24,23 +13,28 @@ class RecipeSystem {
             SHOPPING_LIST: 'despensa-shopping-list'
         };
 
-        this.cacheDuration = 24 * 60 * 60 * 1000;
+        this.cacheDuration = 12 * 60 * 60 * 1000; // 12 horas
         this.currentRecipes = [];
         this.favoriteRecipes = [];
         this.shoppingList = [];
-        this.isInitialized = false;
 
         this.init();
     }
 
     init() {
         this.loadFromStorage();
-        this.isInitialized = true;
-        console.log('🍳 Sistema de recetas listo');
+        console.log('🍳 Sistema de recetas con IA listo');
     }
 
     /**
-     * Analizar inventario y generar sugerencias
+     * Obtener API key de forma segura
+     */
+    getApiKey() {
+        return (window.ENV && window.ENV.GEMINI_API_KEY) || '';
+    }
+
+    /**
+     * Analizar inventario y generar recetas con IA
      */
     async analyzeInventoryAndSuggestRecipes() {
         if (!window.productStorage) {
@@ -54,174 +48,180 @@ class RecipeSystem {
             return [];
         }
 
-        // Extraer ingredientes disponibles
-        const availableIngredients = products.map(p => p.name.toLowerCase().trim());
-
-        console.log('📊 Ingredientes en tu despensa:', availableIngredients);
-
-        // Buscar recetas en la API
-        let recipes = await this.fetchFromAPI(availableIngredients.slice(0, 10));
-
-        // Calcular matching
-        recipes = recipes.map(recipe => {
-            const match = this.calculateMatch(recipe, availableIngredients);
-            return { ...recipe, ...match };
+        // Extraer ingredientes con sus fechas
+        const ingredientes = products.map(p => {
+            let info = p.name;
+            if (p.expiryDate) {
+                const days = Math.ceil((new Date(p.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                if (days <= 3) info += ' (¡vence pronto!)';
+            }
+            return info;
         });
 
-        // Ordenar por porcentaje de coincidencia
-        recipes.sort((a, b) => b.matchingPercentage - a.matchingPercentage);
+        console.log('📊 Ingredientes para IA:', ingredientes);
 
-        this.currentRecipes = recipes;
+        // Verificar cache
+        const cacheKey = `gemini-${ingredientes.sort().join(',')}`;
+        const cached = this.getCachedRecipes(cacheKey);
+        if (cached) {
+            console.log('📦 Recetas obtenidas del cache');
+            this.currentRecipes = cached;
+            return cached;
+        }
+
+        // Consultar Gemini AI
+        const recipes = await this.askGeminiForRecipes(ingredientes);
+
+        if (recipes.length > 0) {
+            this.cacheRecipes(cacheKey, recipes);
+            this.currentRecipes = recipes;
+        }
+
         return recipes;
     }
 
     /**
-     * Calcular match de ingredientes
+     * Consultar Gemini AI para obtener recetas
      */
-    calculateMatch(recipe, availableIngredients) {
-        if (!recipe.ingredientsList || recipe.ingredientsList.length === 0) {
-            return { matchingPercentage: 0, matchingIngredients: [], missingIngredients: recipe.ingredients || [] };
+    async askGeminiForRecipes(ingredientes) {
+        const apiKey = this.getApiKey();
+        if (!apiKey) {
+            console.error('❌ API key de Gemini no configurada');
+            return [];
         }
 
-        const matching = [];
-        const missing = [];
+        const prompt = `Eres un chef experto. Tengo estos ingredientes en mi despensa:
 
-        recipe.ingredientsList.forEach(ingredient => {
-            const ingLower = ingredient.toLowerCase();
-            const found = availableIngredients.some(available => {
-                return ingLower.includes(available) || available.includes(ingLower) ||
-                       ingLower.split(' ').some(word => word.length > 3 && available.includes(word)) ||
-                       available.split(' ').some(word => word.length > 3 && ingLower.includes(word));
-            });
+${ingredientes.map(i => `- ${i}`).join('\n')}
 
-            if (found) {
-                matching.push(ingredient);
-            } else {
-                missing.push(ingredient);
-            }
-        });
+Genera exactamente 6 recetas que pueda preparar usando PRINCIPALMENTE estos ingredientes. 
+Prioriza recetas que usen los ingredientes que vencen pronto.
 
-        const percentage = Math.round((matching.length / recipe.ingredientsList.length) * 100);
+IMPORTANTE:
+- Las recetas deben estar en ESPAÑOL
+- Usa SOLO los ingredientes que te doy como base principal
+- Puedes asumir que tengo ingredientes básicos: sal, pimienta, aceite, agua
+- Sé realista con las combinaciones
 
-        return {
-            matchingPercentage: percentage,
-            matchingIngredients: matching,
-            missingIngredients: missing,
-            matchingCount: matching.length,
-            totalIngredients: recipe.ingredientsList.length
-        };
-    }
+Responde ÚNICAMENTE con un JSON válido (sin markdown, sin backticks, sin texto extra) con este formato exacto:
+[
+  {
+    "title": "Nombre de la receta",
+    "description": "Descripción breve de 1 línea",
+    "readyInMinutes": 25,
+    "servings": 4,
+    "difficulty": "Fácil",
+    "ingredients": ["200g de ingrediente 1", "1 taza de ingrediente 2"],
+    "ingredientsList": ["ingrediente1", "ingrediente2"],
+    "instructions": ["Paso 1", "Paso 2", "Paso 3"],
+    "vegetarian": false,
+    "vegan": false,
+    "glutenFree": true,
+    "tips": "Un consejo útil para esta receta"
+  }
+]
 
-    /**
-     * Obtener recetas de Spoonacular API
-     */
-    async fetchFromAPI(ingredients) {
-        const cacheKey = `api-${ingredients.sort().join(',')}`;
-        const cached = this.getCachedRecipes(cacheKey);
-        if (cached) {
-            console.log('📦 Recetas obtenidas del cache');
-            return cached;
-        }
+Solo el JSON, nada más.`;
 
         try {
-            const config = this.API_CONFIG.SPOONACULAR;
-            const url = `${config.baseUrl}${config.endpoints.findByIngredients}?ingredients=${ingredients.join(',+')}&number=10&ranking=1&ignorePantry=true&apiKey=${config.apiKey}`;
+            console.log('🤖 Consultando Gemini AI...');
 
-            console.log('🌐 Consultando Spoonacular API...');
-            const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+            const response = await fetch(`${this.GEMINI_URL}?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: prompt }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 4096
+                    }
+                }),
+                signal: AbortSignal.timeout(15000)
+            });
 
             if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Gemini API error ${response.status}: ${errorData.error?.message || 'Unknown'}`);
             }
 
             const data = await response.json();
 
-            const recipes = data.map(item => ({
-                id: `${item.id}`,
-                title: item.title,
-                description: `Usa ${item.usedIngredientCount} de tus ingredientes. Faltan ${item.missedIngredientCount}.`,
-                image: item.image || '',
-                readyInMinutes: 30,
-                servings: 4,
-                difficulty: item.missedIngredientCount <= 2 ? 'Fácil' : item.missedIngredientCount <= 4 ? 'Media' : 'Difícil',
-                ingredients: [
-                    ...(item.usedIngredients || []).map(i => i.original),
-                    ...(item.missedIngredients || []).map(i => i.original)
-                ],
-                ingredientsList: [
-                    ...(item.usedIngredients || []).map(i => i.name),
-                    ...(item.missedIngredients || []).map(i => i.name)
-                ],
-                instructions: [],
-                sourceUrl: '',
-                vegetarian: false,
-                vegan: false,
-                glutenFree: false,
-                usedIngredients: (item.usedIngredients || []).map(i => i.name),
-                missedIngredients: (item.missedIngredients || []).map(i => i.name)
-            }));
+            // Extraer texto de la respuesta
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-            console.log(`✅ ${recipes.length} recetas obtenidas de la API`);
-            this.cacheRecipes(cacheKey, recipes);
+            if (!text) {
+                throw new Error('Respuesta vacía de Gemini');
+            }
+
+            // Parsear JSON de la respuesta
+            const recipes = this.parseGeminiResponse(text);
+
+            console.log(`✅ ${recipes.length} recetas generadas por IA`);
             return recipes;
 
         } catch (error) {
-            console.error('❌ Error consultando API:', error);
+            console.error('❌ Error consultando Gemini:', error);
             return [];
         }
     }
 
     /**
-     * Obtener detalles completos de una receta desde la API
+     * Parsear respuesta de Gemini a formato de recetas
      */
-    async getRecipeDetails(recipeId) {
-        // Primero buscar en recetas actuales
-        const existing = this.currentRecipes.find(r => r.id == recipeId) ||
-                        this.favoriteRecipes.find(r => r.id == recipeId);
-
-        // Intentar obtener detalles completos de la API
+    parseGeminiResponse(text) {
         try {
-            const cacheKey = `detail-${recipeId}`;
-            const cached = this.getCachedRecipes(cacheKey);
-            if (cached) return cached;
+            // Limpiar posibles backticks o texto extra
+            let cleanText = text.trim();
+            
+            // Remover bloques de código markdown si existen
+            if (cleanText.startsWith('```')) {
+                cleanText = cleanText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+            }
 
-            const config = this.API_CONFIG.SPOONACULAR;
-            const url = `${config.baseUrl}/recipes/${recipeId}/information?apiKey=${config.apiKey}`;
+            const parsed = JSON.parse(cleanText);
 
-            const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
-            if (!response.ok) return existing || null;
+            if (!Array.isArray(parsed)) {
+                throw new Error('Respuesta no es un array');
+            }
 
-            const data = await response.json();
-
-            const detailed = {
-                id: `${data.id}`,
-                title: data.title,
-                description: data.summary ? data.summary.replace(/<[^>]*>/g, '').substring(0, 300) : '',
-                image: data.image || '',
-                readyInMinutes: data.readyInMinutes || 30,
-                servings: data.servings || 4,
-                difficulty: data.readyInMinutes <= 20 ? 'Fácil' : data.readyInMinutes <= 45 ? 'Media' : 'Difícil',
-                ingredients: (data.extendedIngredients || []).map(i => i.original),
-                ingredientsList: (data.extendedIngredients || []).map(i => i.name),
-                instructions: data.analyzedInstructions && data.analyzedInstructions[0]
-                    ? data.analyzedInstructions[0].steps.map(s => s.step)
-                    : (data.instructions ? [data.instructions.replace(/<[^>]*>/g, '')] : ['Instrucciones no disponibles']),
-                sourceUrl: data.sourceUrl || '',
-                vegetarian: data.vegetarian || false,
-                vegan: data.vegan || false,
-                glutenFree: data.glutenFree || false,
-                matchingPercentage: existing ? existing.matchingPercentage : 0,
-                matchingIngredients: existing ? existing.matchingIngredients : [],
-                missingIngredients: existing ? existing.missingIngredients : []
-            };
-
-            this.cacheRecipes(cacheKey, detailed);
-            return detailed;
+            // Transformar al formato interno
+            return parsed.map((recipe, index) => ({
+                id: `gemini-${Date.now()}-${index}`,
+                title: recipe.title || 'Receta sin título',
+                description: recipe.description || '',
+                image: '',
+                readyInMinutes: recipe.readyInMinutes || 30,
+                servings: recipe.servings || 4,
+                difficulty: recipe.difficulty || 'Media',
+                ingredients: recipe.ingredients || [],
+                ingredientsList: recipe.ingredientsList || [],
+                instructions: recipe.instructions || [],
+                sourceUrl: '',
+                vegetarian: recipe.vegetarian || false,
+                vegan: recipe.vegan || false,
+                glutenFree: recipe.glutenFree || false,
+                tips: recipe.tips || '',
+                matchingPercentage: 100, // IA genera recetas basadas en lo que tienes
+                matchingIngredients: recipe.ingredientsList || [],
+                missingIngredients: []
+            }));
 
         } catch (error) {
-            console.warn('⚠️ No se pudieron obtener detalles:', error);
-            return existing || null;
+            console.error('❌ Error parseando respuesta de Gemini:', error);
+            console.log('Respuesta recibida:', text.substring(0, 500));
+            return [];
         }
+    }
+
+    /**
+     * Obtener detalles de una receta (ya los tenemos completos con IA)
+     */
+    async getRecipeDetails(recipeId) {
+        return this.currentRecipes.find(r => r.id == recipeId) ||
+               this.favoriteRecipes.find(r => r.id == recipeId) ||
+               null;
     }
 
     /**
@@ -249,7 +249,10 @@ class RecipeSystem {
      * Lista de compras
      */
     generateShoppingList(recipe) {
-        if (!recipe || !recipe.missingIngredients) return [];
+        if (!recipe || !recipe.missingIngredients || recipe.missingIngredients.length === 0) {
+            // Con IA las recetas usan lo que tienes, pero podemos agregar ingredientes básicos faltantes
+            return [];
+        }
 
         const newItems = recipe.missingIngredients.map(ingredient => ({
             ingredient,
@@ -266,12 +269,12 @@ class RecipeSystem {
 
     categorizeIngredient(ingredient) {
         const ing = ingredient.toLowerCase();
-        if (/pollo|carne|pescado|atún|huevo|jamón|cerdo|res|chicken|beef|pork|fish|egg/.test(ing)) return 'Proteínas';
-        if (/tomate|cebolla|zanahoria|pimiento|lechuga|espinaca|ajo|patata|papa|tomato|onion|carrot|pepper|garlic|potato/.test(ing)) return 'Verduras';
-        if (/manzana|plátano|naranja|limón|fresa|uva|apple|banana|orange|lemon|strawberry/.test(ing)) return 'Frutas';
-        if (/leche|queso|yogur|nata|mantequilla|crema|milk|cheese|butter|cream/.test(ing)) return 'Lácteos';
-        if (/arroz|pasta|pan|harina|avena|cereal|rice|bread|flour|oat/.test(ing)) return 'Granos';
-        if (/aceite|vinagre|sal|pimienta|orégano|comino|oil|vinegar|salt|pepper|sugar/.test(ing)) return 'Condimentos';
+        if (/pollo|carne|pescado|atún|huevo|jamón|cerdo|res/.test(ing)) return 'Proteínas';
+        if (/tomate|cebolla|zanahoria|pimiento|lechuga|espinaca|ajo|patata|papa/.test(ing)) return 'Verduras';
+        if (/manzana|plátano|naranja|limón|fresa|uva/.test(ing)) return 'Frutas';
+        if (/leche|queso|yogur|nata|mantequilla|crema/.test(ing)) return 'Lácteos';
+        if (/arroz|pasta|pan|harina|avena|cereal/.test(ing)) return 'Granos';
+        if (/aceite|vinagre|sal|pimienta|orégano|comino/.test(ing)) return 'Condimentos';
         return 'Otros';
     }
 
@@ -316,11 +319,10 @@ class RecipeSystem {
         try {
             const cache = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.RECIPE_CACHE) || '{}');
             cache[key] = { data: recipes, timestamp: Date.now() };
-            // Limitar cache a 30 entradas
             const keys = Object.keys(cache);
-            if (keys.length > 30) {
+            if (keys.length > 20) {
                 const sorted = keys.sort((a, b) => cache[a].timestamp - cache[b].timestamp);
-                sorted.slice(0, keys.length - 30).forEach(k => delete cache[k]);
+                sorted.slice(0, keys.length - 20).forEach(k => delete cache[k]);
             }
             localStorage.setItem(this.STORAGE_KEYS.RECIPE_CACHE, JSON.stringify(cache));
         } catch (e) { console.warn('Cache error:', e); }
