@@ -1,18 +1,26 @@
 // Service Worker para Despensa Cero Desperdicio
-const CACHE_NAME = 'despensa-cero-v1.0';
-const STATIC_CACHE_NAME = 'despensa-cero-static-v1.0';
+const CACHE_NAME = 'despensa-cero-v2.0';
+const STATIC_CACHE_NAME = 'despensa-cero-static-v2.0';
 
-// Archivos esenciales para cachear
+// Archivos esenciales para cachear (toda la app para offline)
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/styles.css',
-  '/app.js',
-  '/register-sw.js',
-  '/assets/icon-192.svg',
-  '/assets/icon-512.svg',
-  '/assets/icon-maskable.svg'
+  './',
+  './index.html',
+  './manifest.json',
+  './styles.css',
+  './scanner.css',
+  './app.js',
+  './storage.js',
+  './expiration-alerts.js',
+  './scanner.js',
+  './manual-form.js',
+  './recipes.js',
+  './recipes-ui.js',
+  './register-sw.js',
+  './lib/html5-qrcode.js',
+  './assets/icon-192.svg',
+  './assets/icon-512.svg',
+  './assets/icon-maskable.svg'
 ];
 
 // Instalar Service Worker
@@ -58,26 +66,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
-  // Para APIs externas: Network First, Cache Fallback
+  // Para APIs externas: Network Only (no cachear)
   if (url.hostname === 'world.openfoodfacts.org' || 
-      url.hostname === 'api-inference.huggingface.co') {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Solo cachear respuestas exitosas
-          if (response.ok) {
-            const clonedResponse = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, clonedResponse);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback al cache si la red falla
-          return caches.match(event.request);
-        })
-    );
+      url.hostname === 'generativelanguage.googleapis.com' ||
+      url.hostname === 'api.spoonacular.com') {
+    event.respondWith(fetch(event.request));
     return;
   }
   

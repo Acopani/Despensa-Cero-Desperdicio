@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Meta tags PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -96,8 +96,8 @@
 </head>
 <body>
     <!-- Loading screen -->
-    <div id="loading" class="loading">
-        <div class="loading-spinner"></div>
+    <div id="loading" class="loading" role="status" aria-live="polite" aria-label="Cargando aplicación">
+        <div class="loading-spinner" aria-hidden="true"></div>
         <h1>Despensa Cero Desperdicio</h1>
         <p>Cargando aplicación...</p>
     </div>
@@ -154,23 +154,25 @@
         
         <!-- Footer -->
         <footer class="app-footer">
+            <nav aria-label="Navegación principal">
             <button id="alerts-btn" class="footer-btn" aria-label="Alertas de expiración">
-                <span>🔔</span>
+                <span aria-hidden="true">🔔</span>
                 <span>Alertas</span>
-                <span id="alerts-badge" class="alerts-badge hidden">0</span>
+                <span id="alerts-badge" class="alerts-badge hidden" aria-label="Productos con alerta">0</span>
             </button>
             <button id="scan-btn" class="footer-btn" aria-label="Escanear código de barras">
-                <span>📷</span>
+                <span aria-hidden="true">📷</span>
                 <span>Escanear</span>
             </button>
-            <button id="home-btn" class="footer-btn active" aria-label="Inicio">
-                <span>🏠</span>
+            <button id="home-btn" class="footer-btn active" aria-label="Inicio" aria-current="page">
+                <span aria-hidden="true">🏠</span>
                 <span>Inicio</span>
             </button>
-            <button id="recipes-btn" class="footer-btn" aria-label="Recetas">
-                <span>🍳</span>
+            <button id="recipes-btn" class="footer-btn" aria-label="Recetas sugeridas">
+                <span aria-hidden="true">🍳</span>
                 <span>Recetas</span>
             </button>
+            </nav>
         </footer>
         
         <!-- Modals will be injected here -->

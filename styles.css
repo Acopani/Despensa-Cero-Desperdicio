@@ -7,6 +7,17 @@
     box-sizing: border-box;
 }
 
+/* Focus visible para accesibilidad */
+:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+button:focus-visible {
+    outline: 3px solid var(--primary-dark);
+    outline-offset: 2px;
+}
+
 :root {
     --primary-color: #4CAF50;
     --primary-dark: #388E3C;
