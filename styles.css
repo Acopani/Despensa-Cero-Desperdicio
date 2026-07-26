@@ -213,7 +213,7 @@ button {
     color: var(--text-light);
 }
 
-/* Product Card (placeholder para Task 2) */
+/* Product Card - Actualizado para Task 2 */
 .product-card {
     background-color: var(--surface-color);
     border-radius: var(--border-radius);
@@ -221,6 +221,7 @@ button {
     box-shadow: var(--shadow);
     border-left: 4px solid var(--safe-color);
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .product-card.urgent {
@@ -234,9 +235,104 @@ button {
 }
 
 .product-card.expired {
-    opacity: 0.6;
-    filter: grayscale(0.5);
     border-left-color: var(--text-light);
+    background-color: rgba(158, 158, 158, 0.05);
+}
+
+.product-card.unknown {
+    border-left-color: var(--text-light);
+}
+
+.product-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.product-name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    flex: 1;
+}
+
+.product-quantity {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    margin-left: var(--spacing-sm);
+    white-space: nowrap;
+}
+
+.product-card-content {
+    margin-bottom: var(--spacing-lg);
+}
+
+.product-category {
+    font-size: var(--font-size-sm);
+    color: var(--text-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.product-expiry {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-md);
+    margin-bottom: var(--spacing-xs);
+}
+
+.product-expiry strong {
+    color: var(--text-color);
+}
+
+.product-status {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+.product-status.safe {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.product-status.warning {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: var(--warning-color);
+}
+
+.product-status.urgent {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: var(--danger-color);
+}
+
+.product-status.expired {
+    background-color: rgba(158, 158, 158, 0.2);
+    color: var(--text-light);
+}
+
+.product-status.unknown {
+    background-color: rgba(158, 158, 158, 0.2);
+    color: var(--text-light);
+}
+
+.product-card-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.product-card-actions button {
+    flex: 1;
 }
 
 /* Footer */
