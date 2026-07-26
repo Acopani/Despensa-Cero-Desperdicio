@@ -19,13 +19,20 @@ class ExpirationAlerts {
         this.viewedAlertsKey = 'despensa-viewed-alerts';
         this.notificationPermission = null;
         
-        this.init();
+        // Inicialización diferida para evitar problemas de carga
+        setTimeout(() => {
+            this.init();
+        }, 100);
     }
     
     init() {
-        // Verificar permisos de notificación al iniciar
-        this.checkNotificationPermission();
-        console.log('Sistema de alertas de expiración inicializado');
+        try {
+            // Verificar permisos de notificación al iniciar
+            this.checkNotificationPermission();
+            console.log('✅ Sistema de alertas de expiración inicializado');
+        } catch (error) {
+            console.error('❌ Error inicializando sistema de alertas:', error);
+        }
     }
     
     /**
