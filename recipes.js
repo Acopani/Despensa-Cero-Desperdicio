@@ -86,7 +86,7 @@ class RecipeSystem {
     async askGeminiForRecipes(ingredientes) {
         const apiKey = this.getApiKey();
         if (!apiKey) {
-            console.error('❌ API key de Gemini no configurada');
+            console.error('❌ API key de Gemini no configurada. Revisa env.js');
             return [];
         }
 
@@ -125,8 +125,12 @@ Solo el JSON, nada más.`;
 
         try {
             console.log('🤖 Consultando Gemini AI...');
+            console.log('🔑 API Key (primeros 10 chars):', apiKey.substring(0, 10) + '...');
 
-            const response = await fetch(`${this.GEMINI_URL}?key=${apiKey}`, {
+            const url = `${this.GEMINI_URL}?key=${apiKey}`;
+            console.log('🌐 URL:', url.replace(apiKey, 'API_KEY_HIDDEN'));
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -138,22 +142,29 @@ Solo el JSON, nada más.`;
                         maxOutputTokens: 4096
                     }
                 }),
-                signal: AbortSignal.timeout(15000)
+                signal: AbortSignal.timeout(20000)
             });
 
+            console.log('📡 Status:', response.status, response.statusText);
+
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(`Gemini API error ${response.status}: ${errorData.error?.message || 'Unknown'}`);
+                const errorText = await response.text();
+                console.error('❌ Error respuesta API:', errorText);
+                throw new Error(`Gemini API error ${response.status}: ${errorText}`);
             }
 
             const data = await response.json();
+            console.log('📥 Respuesta recibida de Gemini');
 
             // Extraer texto de la respuesta
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
             if (!text) {
+                console.error('❌ Respuesta vacía. Data:', JSON.stringify(data).substring(0, 500));
                 throw new Error('Respuesta vacía de Gemini');
             }
+
+            console.log('📝 Texto recibido (primeros 200 chars):', text.substring(0, 200));
 
             // Parsear JSON de la respuesta
             const recipes = this.parseGeminiResponse(text);
@@ -162,7 +173,7 @@ Solo el JSON, nada más.`;
             return recipes;
 
         } catch (error) {
-            console.error('❌ Error consultando Gemini:', error);
+            console.error('❌ Error consultando Gemini:', error.message);
             return [];
         }
     }

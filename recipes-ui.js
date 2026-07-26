@@ -69,6 +69,29 @@ class RecipesUI {
 
             this.isLoading = false;
             
+            if (recipes.length === 0) {
+                const contentEl2 = document.getElementById('recipes-content');
+                if (contentEl2) {
+                    contentEl2.innerHTML = `
+                        ${this.getInventoryHTML()}
+                        <div class="recipes-empty">
+                            <div class="empty-icon">⚠️</div>
+                            <h3>No se pudieron generar recetas</h3>
+                            <p>Verifica la consola (F12) para ver el error. Posibles causas:</p>
+                            <ul style="text-align:left; margin: 12px auto; max-width: 300px; font-size: 14px; color: #666;">
+                                <li>API key inválida en env.js</li>
+                                <li>Sin conexión a internet</li>
+                                <li>Límite de API excedido</li>
+                            </ul>
+                            <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
+                                🔄 Reintentar
+                            </button>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
             // Mostrar resumen de inventario + recetas
             this.renderSuggestionsWithInventory(recipes);
 
@@ -80,13 +103,33 @@ class RecipesUI {
                 <div class="recipes-empty">
                     <div class="empty-icon">🔌</div>
                     <h3>Error al cargar recetas</h3>
-                    <p>No se pudieron obtener sugerencias. Verifica tu conexión a internet.</p>
+                    <p>Error: ${error.message}</p>
                     <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
                         🔄 Reintentar
                     </button>
                 </div>
             `;
         }
+    }
+
+    /**
+     * Obtener HTML del resumen de inventario
+     */
+    getInventoryHTML() {
+        if (!window.productStorage) return '';
+        const products = window.productStorage.getAllProducts();
+        if (products.length === 0) return '';
+        
+        const productNames = products.map(p => p.name).slice(0, 10);
+        return `
+            <div class="inventory-summary">
+                <h4>📦 Tu despensa tiene:</h4>
+                <div class="inventory-chips">
+                    ${productNames.map(name => `<span class="inventory-chip">${name}</span>`).join('')}
+                    ${products.length > 10 ? `<span class="inventory-chip more">+${products.length - 10} más</span>` : ''}
+                </div>
+            </div>
+        `;
     }
 
     /**
