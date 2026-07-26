@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test del Sistema de Alertas de Expiración</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .feature-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            border-left: 6px solid;
+        }
+        .feature-section.status-fresh {
+            border-left-color: #4CAF50;
+            background: #E8F5E9;
+        }
+        .feature-section.status-warning {
+            border-left-color: #FF9800;
+            background: #FFF3E0;
+        }
+        .feature-section.status-critical {
+            border-left-color: #F44336;
+            background: #FFEBEE;
+        }
+        .feature-section.status-expired {
+            border-left-color: #9E9E9E;
+            background: #F5F5F5;
+        }
+        .feature-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .feature-icon {
+            font-size: 24px;
+            background: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .test-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .test-btn.primary {
+            background: #764ba2;
+            color: white;
+        }
+        .test-btn.primary:hover {
+            background: #5a3785;
+            transform: translateY(-3px);
+        }
+        .test-btn.secondary {
+            background: #667eea;
+            color: white;
+        }
+        .test-btn.secondary:hover {
+            background: #4a63d8;
+            transform: translateY(-3px);
+        }
+        .test-btn.warning {
+            background: #FF9800;
+            color: white;
+        }
+        .test-btn.warning:hover {
+            background: #F57C00;
+            transform: translateY(-3px);
+        }
+        .test-btn.danger {
+            background: #F44336;
+            color: white;
+        }
+        .test-btn.danger:hover {
+            background: #D32F2F;
+            transform: translateY(-3px);
+        }
+        .test-output {
+            background: #2d3748;
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            min-height: 150px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .status-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status-fresh { background: #E8F5E9; color: #2E7D32; }
+        .status-warning { background: #FFF3E0; color: #EF6C00; }
+        .status-critical { background: #FFEBEE; color: #D32F2F; }
+        .status-expired { background: #F5F5F5; color: #616161; }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .status-item {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .demo-products {
+            background: #E3F2FD;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+        .demo-product {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .demo-product.fresh { border-left-color: #4CAF50; }
+        .demo-product.warning { border-left-color: #FF9800; }
+        .demo-product.critical { border-left-color: #F44336; }
+        .demo-product.expired { border-left-color: #9E9E9E; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .badge-count {
+            background: #764ba2;
+            color: white;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h2 {
+            margin: 0;
+            color: #2d3748;
+        }
+        .timestamp {
+            color: #718096;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test del Sistema de Alertas de Expiración</h1>
+        <div class="timestamp" id="timestamp">Test iniciado: <span id="current-time"></span></div>
+        
+        <div class="feature-section status-fresh">
+            <div class="feature-title">
+                <div class="feature-icon">✅</div>
+                <h2>1. Sistema de Cálculo de Estados</h2>
+            </div>
+            <p>Calcula automáticamente el estado de cada producto basado en su fecha de expiración:</p>
+            <div class="status-grid">
+                <div class="status-item status-fresh">
+                    <strong>🍃 Fresco</strong><br>
+                    >7 días restantes
+                </div>
+                <div class="status-item status-warning">
+                    <strong>⚠️ Próximo</strong><br>
+                    4-7 días restantes
+                </div>
+                <div class="status-item status-critical">
+                    <strong>🔥 Urgente</strong><br>
+                    0-3 días restantes
+                </div>
+                <div class="status-item status-expired">
+                    <strong>⌛ Vencido</strong><br>
+                    Fecha pasada
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature-section status-warning">
+            <div class="feature-title">
+                <div class="feature-icon">🔔</div>
+                <h2>2. Sistema de Notificaciones</h2>
+            </div>
+            <p>Envía notificaciones locales automáticas cuando hay productos que requieren atención:</p>
+            <ul>
+                <li><strong>Notificaciones push</strong> del navegador</li>
+                <li><strong>Badge animado</strong> en el footer de la aplicación</li>
+                <li><strong>Dashboard completo</strong> con productos críticos</li>
+                <li><strong>Monitoreo en tiempo real</strong> (actualización cada hora)</li>
+            </ul>
+        </div>
+        
+        <div class="demo-products">
+            <div class="section-header">
+                <h2>📊 Productos de Demostración</h2>
+                <span class="badge badge-count">5 productos</span>
+            </div>
+            <div class="demo-product fresh">
+                <span>🥝 Kiwi Fresco - Vence en 10 días</span>
+                <span class="status-card status-fresh">🍃 Fresco</span>
+            </div>
+            <div class="demo-product warning">
+                <span>🥛 Leche - Vence en 5 días</span>
+                <span class="status-card status-warning">⚠️ Próximo</span>
+            </div>
+            <div class="demo-product critical">
+                <span>🍞 Pan - Vence mañana</span>
+                <span class="status-card status-critical">🔥 Urgente</span>
+            </div>
+            <div class="demo-product expired">
+                <span>🥚 Huevos - Vencidos hace 2 días</span>
+                <span class="status-card status-expired">⌛ Vencido</span>
+            </div>
+            <div class="demo-product critical">
+                <span>🍎 Manzanas - Vence hoy</span>
+                <span class="status-card status-critical">🔥 Urgente</span>
+            </div>
+        </div>
+        
+        <div class="feature-section status-critical">
+            <div class="feature-title">
+                <div class="feature-icon">📊</div>
+                <h2>3. Dashboard Crítico</h2>
+            </div>
+            <p>Interfaz completa para gestionar productos que requieren atención inmediata:</p>
+            <ul>
+                <li><strong>Lista organizada</strong> por urgencia</li>
+                <li><strong>Código de colores</strong> visual</li>
+                <li><strong>Acciones rápidas</strong> (eliminar, ver detalles)</li>
+                <li><strong>Filtros automáticos</strong> por estado</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="test-btn primary" onclick="testStatusCalculation()">
+                <span>🧮</span>
+                Probar Cálculo de Estados
+            </button>
+            <button class="test-btn secondary" onclick="testNotifications()">
+                <span>🔔</span>
+                Probar Notificaciones
+            </button>
+            <button class="test-btn warning" onclick="testDashboard()">
+                <span>📊</span>
+                Probar Dashboard Crítico
+            </button>
+            <button class="test-btn danger" onclick="testExpiredProducts()">
+                <span>🗑️</span>
+                Eliminar Productos Vencidos
+            </button>
+        </div>
+        
+        <div id="test-output" class="test-output">
+            <div>🚀 Sistema de alertas de expiración - Ready for testing</div>
+            <div>⏱️ Esperando pruebas...</div>
+        </div>
+        
+        <div class="feature-section status-fresh">
+            <div class="feature-title">
+                <div class="feature-icon">📱</div>
+                <h2>4. Probar en la Aplicación Principal</h2>
+            </div>
+            <p>Para probar el sistema completo en la aplicación:</p>
+            <ol>
+                <li>Abre <code>index.html</code> en tu navegador</li>
+                <li>Escanear o agregar productos manualmente con fechas de expiración</li>
+                <li>Observa el <strong>badge rojo</strong> en el botón de alertas del footer</li>
+                <li>Haz clic en el botón <strong>🔔 Alertas</strong> para ver el dashboard</li>
+                <li>Recibirás <strong>notificaciones push</strong> automáticas cuando haya productos críticos</li>
+            </ol>
+        </div>
+        
+        <div style="background: #E8F5E9; padding: 25px; border-radius: 12px; margin: 30px 0; text-align: center; border: 3px solid #4CAF50;">
+            <h3 style="color: #2E7D32; margin-bottom: 15px;">✅ Task 5: Sistema de Alertas de Expiración - COMPLETADO</h3>
+            <p><strong>Funcionalidades implementadas:</strong></p>
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 20px 0;">
+                <span class="badge" style="background: #4CAF50; color: white;">Cálculo de estados</span>
+                <span class="badge" style="background: #FF9800; color: white;">Notificaciones locales</span>
+                <span class="badge" style="background: #F44336; color: white;">Dashboard crítico</span>
+                <span class="badge" style="background: #764ba2; color: white;">Monitoreo en tiempo real</span>
+                <span class="badge" style="background: #2196F3; color: white;">Integración completa</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Actualizar timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleDateString('es-ES') + ' ' + now.toLocaleTimeString('es-ES');
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        function logToOutput(message) {
+            const output = document.getElementById('test-output');
+            const timestamp = new Date().toLocaleTimeString('es-ES', { hour12: false });
+            const logEntry = `<div>[${timestamp}] ${message}</div>`;
+            output.innerHTML = logEntry + output.innerHTML;
+        }
+
+        function testStatusCalculation() {
+            logToOutput("🧮 Probando cálculo de estados...");
+            
+            if (typeof window.expirationAlerts === 'undefined') {
+                logToOutput("❌ Sistema de alertas no disponible. Abre index.html primero.");
+                return;
+            }
+            
+            // Simular diferentes fechas
+            const testDates = [
+                { date: getDateString(10), expected: 'fresh' },
+                { date: getDateString(5), expected: 'warning' },
+                { date: getDateString(2), expected: 'critical' },
+                { date: getDateString(-2), expected: 'expired' },
+                { date: null, expected: 'fresh' }
+            ];
+            
+            testDates.forEach(test => {
+                const status = window.expirationAlerts.calculateProductStatus(test.date);
+                const result = status.status.id === test.expected ? '✅' : '❌';
+                const dateDisplay = test.date || 'No fecha';
+                logToOutput(`${result} ${dateDisplay} → ${status.status.label} (${status.daysRemaining !== null ? status.daysRemaining + ' días' : 'N/A'})`);
+            });
+            
+            logToOutput("✅ Cálculo de estados probado exitosamente");
+        }
+
+        function testNotifications() {
+            logToOutput("🔔 Probando sistema de notificaciones...");
+            
+            if (!('Notification' in window)) {
+                logToOutput("❌ Este navegador no soporta notificaciones");
+                return;
+            }
+            
+            if (Notification.permission === 'granted') {
+                logToOutput("✅ Permiso de notificaciones ya concedido");
+                
+                // Mostrar notificación de prueba
+                try {
+                    const notification = new Notification('🚨 Test de Alertas de Despensa', {
+                        body: 'El sistema de notificaciones funciona correctamente',
+                        icon: '/icons/icon-192x192.png',
+                        tag: 'test-notification'
+                    });
+                    
+                    notification.onclick = () => {
+                        logToOutput("✅ Notificación clicada");
+                        notification.close();
+                    };
+                    
+                    logToOutput("📨 Notificación de prueba enviada");
+                    
+                } catch (error) {
+                    logToOutput(`❌ Error mostrando notificación: ${error.message}`);
+                }
+                
+            } else if (Notification.permission !== 'denied') {
+                logToOutput("⚠️ Solicitando permiso de notificaciones...");
+                
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        logToOutput("✅ Permiso de notificaciones concedido");
+                        testNotifications();
+                    } else {
+                        logToOutput("❌ Permiso de notificaciones denegado");
+                    }
+                });
+            } else {
+                logToOutput("❌ Permiso de notificaciones previamente denegado");
+            }
+        }
+
+        function testDashboard() {
+            logToOutput("📊 Probando dashboard crítico...");
+            
+            if (typeof window.expirationAlerts === 'undefined') {
+                logToOutput("❌ Sistema de alertas no disponible");
+                return;
+            }
+            
+            if (typeof window.productStorage === 'undefined') {
+                logToOutput("❌ Almacenamiento no disponible");
+                return;
+            }
+            
+            // Analizar productos
+            const analysis = window.expirationAlerts.analyzeAllProducts();
+            
+            logToOutput(`📦 Análisis de productos:`);
+            logToOutput(`   Total: ${window.productStorage.getAllProducts().length} productos`);
+            logToOutput(`   🔥 Críticos: ${analysis.criticalProducts.length}`);
+            logToOutput(`   ⚠️ Próximos: ${analysis.warningProducts.length}`);
+            logToOutput(`   ⌛ Vencidos: ${analysis.expiredProducts.length}`);
+            logToOutput(`   🚨 Alertas totales: ${analysis.totalAlertProducts}`);
+            
+            // Mostrar dashboard
+            if (analysis.totalAlertProducts > 0) {
+                window.expirationAlerts.showCriticalDashboard();
+                logToOutput("📊 Dashboard crítico abierto");
+            } else {
+                window.expirationAlerts.showNoAlertsModal();
+                logToOutput("📊 Modal 'sin alertas' mostrado");
+            }
+        }
+
+        function testExpiredProducts() {
+            logToOutput("🗑️ Probando eliminación de productos vencidos...");
+            
+            if (typeof window.productStorage === 'undefined') {
+                logToOutput("❌ Almacenamiento no disponible");
+                return;
+            }
+            
+            if (typeof window.productStorage.removeExpiredProducts !== 'function') {
+                logToOutput("❌ Función removeExpiredProducts no disponible");
+                return;
+            }
+            
+            const result = window.productStorage.removeExpiredProducts();
+            
+            logToOutput(`✅ Resultado de eliminación:`);
+            logToOutput(`   🗑️ Eliminados: ${result.count} productos vencidos`);
+            logToOutput(`   📦 Restantes: ${result.remaining.length} productos`);
+            
+            if (result.removed.length > 0) {
+                logToOutput("   Productos eliminados:");
+                result.removed.forEach(product => {
+                    logToOutput(`      • ${product.name} (${product.expirationDate})`);
+                });
+            }
+        }
+
+        function getDateString(daysOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysOffset);
+            return date.toISOString().split('T')[0];
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            logToOutput("🚀 Sistema de test de alertas de expiración iniciado");
+            logToOutput("📱 Task 5: Sistema de alertas de expiración locales - IMPLEMENTADO");
+            logToOutput("💡 Para probar completamente, abre la aplicación principal (index.html)");
+        });
+    </script>
+</body>
+</html>

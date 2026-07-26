@@ -50,6 +50,19 @@ async function initializeApp() {
             const stats = window.productStorage.getStatistics();
             console.log('Estadísticas:', stats);
             
+            // Iniciar monitoreo en tiempo real de alertas
+            if (window.expirationAlerts) {
+                window.expirationAlerts.startRealTimeMonitoring();
+                console.log('Monitoreo de alertas iniciado');
+            }
+            
+            // Mostrar notificaciones locales si hay productos críticos
+            setTimeout(() => {
+                if (window.expirationAlerts) {
+                    window.expirationAlerts.showLocalNotifications();
+                }
+            }, 2000);
+            
         }, 800);
         
     } catch (error) {
@@ -162,17 +175,31 @@ function getDateString(daysOffset) {
 function updateSummary() {
     if (!isAppInitialized) return;
     
-    if (window.productStorage) {
-        const summary = window.productStorage.getSummary();
+    // Usar sistema de alertas para calcular estados
+    if (window.expirationAlerts && window.productStorage) {
+        const products = window.productStorage.getAllProducts();
+        const analysis = window.expirationAlerts.analyzeAllProducts();
         
         // Actualizar elementos del DOM
+        totalProductsElement.textContent = products.length;
+        urgentProductsElement.textContent = analysis.criticalProducts.length;
+        warningProductsElement.textContent = analysis.warningProducts.length + analysis.expiredProducts.length;
+        
+        // Actualizar colores de las tarjetas basados en alertas
+        updateSummaryCardColors();
+        
+        // Actualizar indicador de alertas en el footer si existe
+        updateAlertsIndicator(analysis);
+        
+    } else if (window.productStorage) {
+        // Fallback al sistema anterior
+        const summary = window.productStorage.getSummary();
+        
         totalProductsElement.textContent = summary.total;
         urgentProductsElement.textContent = summary.urgent;
         warningProductsElement.textContent = summary.warning;
         
-        // Actualizar colores de las tarjetas
         updateSummaryCardColors();
-        
     } else {
         // Fallback a cálculo manual
         const today = new Date();
@@ -190,7 +217,10 @@ function updateSummary() {
         totalProductsElement.textContent = products.length;
         urgentProductsElement.textContent = urgentCount;
         warningProductsElement.textContent = warningCount;
+        
+        updateSummaryCardColors();
     }
+}
 }
 
 // Actualizar colores de las tarjetas de resumen
@@ -537,6 +567,19 @@ function showError(message) {
 
 // Manejar botones de navegación
 function setupNavigation() {
+    // Configurar botón de alertas
+    const alertsBtn = document.getElementById('alerts-btn');
+    if (alertsBtn) {
+        alertsBtn.addEventListener('click', () => {
+            console.log('Abrir dashboard de alertas');
+            if (window.expirationAlerts) {
+                window.expirationAlerts.showCriticalDashboard();
+            } else {
+                showToast('Sistema de alertas no disponible');
+            }
+        });
+    }
+    
     scanBtn.addEventListener('click', () => {
         console.log('Abrir escáner de código de barras');
         openScanner();
@@ -649,4 +692,39 @@ window.despensaApp = {
     showAddProductModal,
     showEditProductModal,
     closeModal
+};
+
+// Actualizar indicador de alertas en el footer
+function updateAlertsIndicator(analysis) {
+    const alertsBadge = document.getElementById('alerts-badge');
+    if (!alertsBadge) return;
+    
+    const totalAlerts = analysis.criticalProducts.length + 
+                       analysis.warningProducts.length + 
+                       analysis.expiredProducts.length;
+    
+    if (totalAlerts > 0) {
+        alertsBadge.textContent = totalAlerts > 99 ? '99+' : totalAlerts;
+        alertsBadge.classList.remove('hidden');
+    } else {
+        alertsBadge.classList.add('hidden');
+    }
+}
+
+// Agregar evento al botón de alertas
+function setupAlertsButton() {
+    const alertsBtn = document.getElementById('alerts-btn');
+    if (alertsBtn) {
+        alertsBtn.addEventListener('click', () => {
+            if (window.expirationAlerts) {
+                window.expirationAlerts.showCriticalDashboard();
+            }
+        });
+    }
+}
+
+// Función para actualizar la lista de productos
+window.updateProductList = function() {
+    renderProductsList();
+    updateSummary();
 };

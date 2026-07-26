@@ -154,6 +154,11 @@
         
         <!-- Footer -->
         <footer class="app-footer">
+            <button id="alerts-btn" class="footer-btn" aria-label="Alertas de expiración">
+                <span>🔔</span>
+                <span>Alertas</span>
+                <span id="alerts-badge" class="alerts-badge hidden">0</span>
+            </button>
             <button id="scan-btn" class="footer-btn" aria-label="Escanear código de barras">
                 <span>📷</span>
                 <span>Escanear</span>
@@ -175,6 +180,7 @@
     <!-- JavaScript Files -->
     <script src="lib/html5-qrcode.js" defer></script>
     <script src="storage.js" defer></script>
+    <script src="expiration-alerts.js" defer></script>
     <script src="scanner.js" defer></script>
     <script src="manual-form.js" defer></script>
     <script src="app.js" defer></script>
