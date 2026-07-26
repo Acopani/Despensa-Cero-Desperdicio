@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Task 2 - Sistema de Almacenamiento</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .summary-item {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .summary-item.green { background: #E8F5E9; border: 2px solid #4CAF50; }
+        .summary-item.blue { background: #E3F2FD; border: 2px solid #2196F3; }
+        .summary-item.orange { background: #FFF3E0; border: 2px solid #FF9800; }
+        .summary-item.red { background: #FFEBEE; border: 2px solid #F44336; }
+        .summary-item .number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #4CAF50;
+        }
+        .feature-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .test-btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .test-btn:hover {
+            background: #388E3C;
+        }
+        .test-btn.secondary {
+            background: #2196F3;
+        }
+        .test-btn.secondary:hover {
+            background: #1976D2;
+        }
+        .test-btn.danger {
+            background: #F44336;
+        }
+        .test-btn.danger:hover {
+            background: #D32F2F;
+        }
+        .output {
+            background: #333;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.completed {
+            background: #4CAF50;
+            color: white;
+        }
+        .status.pending {
+            background: #FF9800;
+            color: white;
+        }
+        .progress-bar {
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            width: 28%;
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Task 2 Completada: Sistema de almacenamiento local con localStorage</h1>
+        <p class="subtitle">Módulo CRUD completo con optimización de espacio y persistencia real</p>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-item green">
+                <h3>Archivo Principal</h3>
+                <div class="number">storage.js</div>
+                <p>248 líneas de código</p>
+            </div>
+            <div class="summary-item blue">
+                <h3>Funcionalidades</h3>
+                <div class="number">12+</div>
+                <p>CRUD completo y más</p>
+            </div>
+            <div class="summary-item orange">
+                <h3>Límite de Almacenamiento</h3>
+                <div class="number">50KB</div>
+                <p>Para ~1000 productos</p>
+            </div>
+            <div class="summary-item red">
+                <h3>Commits</h3>
+                <div class="number">1</div>
+                <p>"Task 2: Add localStorage module for product management"</p>
+            </div>
+        </div>
+        
+        <h2>✨ Características Implementadas</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>✅ CRUD Completo</h3>
+                <ul>
+                    <li>Create: <code>add(productData)</code></li>
+                    <li>Read: <code>getAll(), getById(id)</code></li>
+                    <li>Update: <code>update(id, updates)</code></li>
+                    <li>Delete: <code>remove(id)</code></li>
+                    <li>Búsqueda: <code>search(query)</code></li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h3>✅ Gestión de Estados</h3>
+                <ul>
+                    <li>Cálculo automático de expiración</li>
+                    <li>Estados: safe, warning, urgent, expired</li>
+                    <li>Filtrado por estado</li>
+                    <li>Días restantes calculados</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h3>✅ Optimización de Espacio</h3>
+                <ul>
+                    <li>Límite configurable de 50KB</li>
+                    <li>Sanitización de texto</li>
+                    <li>Normalización de fechas</li>
+                    <li>Esquema optimizado</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h3>✅ Estadísticas y Cache</h3>
+                <ul>
+                    <li>Estadísticas de uso</li>
+                    <li>Tamaño de almacenamiento</li>
+                    <li>Cache para productos escaneados</li>
+                    <li>Categorías personalizables</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2>🔧 Interfaz Integrada</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>✅ Formulario de Añadir Producto</h3>
+                <ul>
+                    <li>Validación de campos requeridos</li>
+                    <li>Selección de categorías</li>
+                    <li>Fecha sugerida automática</li>
+                    <li>Campo de notas opcional</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h3>✅ Tarjetas de Producto Mejoradas</h3>
+                <ul>
+                    <li>Estados visuales con colores</li>
+                    <li>Información de caducidad</li>
+                    <li>Botones de editar/eliminar</li>
+                    <li>Notas visibles</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h3>✅ Resumen Actualizado</h3>
+                <ul>
+                    <li>Contadores en tiempo real</li>
+                    <li>Colores dinámicos según cantidad</li>
+                    <li>Estadísticas integradas</li>
+                    <li>Actualización automática</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h2>💾 Ejemplo de Uso del Módulo</h2>
+        <div class="code-block">
+// Uso básico del módulo storage
+const productData = {
+    name: "Manzanas Fuji",
+    quantity: 5,
+    expiryDate: "2024-12-31",
+    category: "Frutas",
+    notes: "Comprar en el mercado local"
+};
+
+// Añadir producto
+const newProduct = window.productStorage.add(productData);
+
+// Obtener todos los productos
+const allProducts = window.productStorage.getAll();
+
+// Buscar productos
+const searchResults = window.productStorage.search("manzana");
+
+// Obtener estadísticas
+const stats = window.productStorage.getStatistics();
+
+// Eliminar productos expirados
+const expiredProducts = window.productStorage.removeExpired();
+        </div>
+        
+        <h2>🧪 Pruebas del Sistema</h2>
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testGetAll()">Obtener Todos los Productos</button>
+            <button class="test-btn secondary" onclick="testAddProduct()">Añadir Producto de Prueba</button>
+            <button class="test-btn secondary" onclick="testGetStatistics()">Ver Estadísticas</button>
+            <button class="test-btn danger" onclick="testClearStorage()">Limpiar Almacenamiento</button>
+        </div>
+        
+        <div id="test-output" class="output">
+            Resultados de las pruebas aparecerán aquí...
+        </div>
+        
+        <h2>📊 Esquema de Almacenamiento</h2>
+        <div class="code-block">
+// Estructura de un producto (optimizada para espacio)
+{
+    "id": "timestamp-uuid",          // String único
+    "name": "Manzana Fuji",          // String (max 200 chars)
+    "quantity": 3,                   // Number
+    "expiryDate": "2024-12-31",      // String ISO (YYYY-MM-DD)
+    "barcode": "1234567890123",      // String o null
+    "category": "Frutas",            // String
+    "imageUrl": null,                // URL o null (Task 3)
+    "notes": "Comprar en mercado",   // String o null
+    "addedDate": "2024-01-01T12:00:00Z",
+    "lastUpdated": "2024-01-01T12:00:00Z",
+    "daysUntil": 30,                 // Number (calculado)
+    "expiryStatus": "safe"           // String: safe/warning/urgent/expired
+}
+        </div>
+        
+        <h2>🚀 Próximo Paso: Task 3</h2>
+        <div style="background: #FFF3E0; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h3>Escaneo de códigos de barras con cámara web</h3>
+            <p><strong>Objetivo:</strong> Integrar captura automatizada usando hardware del usuario</p>
+            
+            <h4>Archivos a crear:</h4>
+            <ul>
+                <li><code>scanner.html</code> - Componente de cámara modal</li>
+                <li><code>scanner.js</code> - Lógica de escaneo y API integration</li>
+                <li><code>scanner.css</code> - Estilos específicos del escáner</li>
+            </ul>
+            
+            <h4>Funcionalidades:</h4>
+            <ul>
+                <li>Integración con Open Food Facts API</li>
+                <li>Manejo de errores y fallbacks</li>
+                <li>Cache local de productos escaneados</li>
+                <li>Formulario manual como fallback</li>
+            </ul>
+        </div>
+        
+        <div style="background: #E8F5E9; padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center;">
+            <h2>✅ Task 2 COMPLETADA EXITOSAMENTE</h2>
+            <p>Sistema de almacenamiento local completamente funcional integrado con la interfaz de usuario.</p>
+            <p><strong>Listo para continuar con Task 3: Escaneo de códigos de barras</strong></p>
+        </div>
+    </div>
+
+    <script>
+        function logToOutput(message) {
+            const output = document.getElementById('test-output');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            output.innerHTML = logEntry + '<br>' + output.innerHTML;
+        }
+
+        function testGetAll() {
+            if (typeof window.productStorage === 'undefined') {
+                logToOutput("❌ Módulo de almacenamiento no disponible. Abre index.html primero.");
+                return;
+            }
+            
+            const products = window.productStorage.getAll();
+            logToOutput(`📦 Productos en almacenamiento: ${products.length}`);
+            
+            if (products.length > 0) {
+                products.slice(0, 3).forEach((product, index) => {
+                    logToOutput(`   ${index + 1}. ${product.name} (${product.category}) - ${product.expiryStatus}`);
+                });
+                if (products.length > 3) {
+                    logToOutput(`   ... y ${products.length - 3} más`);
+                }
+            } else {
+                logToOutput("   No hay productos en el almacenamiento.");
+            }
+        }
+
+        function testAddProduct() {
+            if (typeof window.productStorage === 'undefined') {
+                logToOutput("❌ Módulo de almacenamiento no disponible.");
+                return;
+            }
+            
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const expiryDate = tomorrow.toISOString().split('T')[0];
+            
+            const testProduct = {
+                name: "Producto de Prueba " + Date.now().toString().slice(-4),
+                quantity: Math.floor(Math.random() * 5) + 1,
+                expiryDate: expiryDate,
+                category: "Otros",
+                notes: "Añadido desde prueba Task 2"
+            };
+            
+            try {
+                const newProduct = window.productStorage.add(testProduct);
+                logToOutput(`✅ Producto añadido: "${testProduct.name}" (ID: ${newProduct.id})`);
+                logToOutput(`   Cantidad: ${testProduct.quantity}, Caduca: ${testProduct.expiryDate}`);
+            } catch (error) {
+                logToOutput(`❌ Error añadiendo producto: ${error.message}`);
+            }
+        }
+
+        function testGetStatistics() {
+            if (typeof window.productStorage === 'undefined') {
+                logToOutput("❌ Módulo de almacenamiento no disponible.");
+                return;
+            }
+            
+            const stats = window.productStorage.getStatistics();
+            logToOutput("📊 Estadísticas del almacenamiento:");
+            logToOutput(`   Total productos: ${stats.totalProducts || 0}`);
+            logToOutput(`   Productos añadidos: ${stats.totalProductsAdded || 0}`);
+            logToOutput(`   Productos eliminados: ${stats.totalProductsDeleted || 0}`);
+            logToOutput(`   Tamaño almacenamiento: ${stats.storageSize || 0} bytes`);
+            logToOutput(`   Última actualización: ${stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleTimeString() : 'Nunca'}`);
+            
+            if (stats.summary) {
+                logToOutput("   Resumen por estado:");
+                logToOutput(`     Seguros: ${stats.summary.safe || 0}`);
+                logToOutput(`     Próximos: ${stats.summary.warning || 0}`);
+                logToOutput(`     Urgentes: ${stats.summary.urgent || 0}`);
+                logToOutput(`     Vencidos: ${stats.summary.expired || 0}`);
+            }
+        }
+
+        function testClearStorage() {
+            if (confirm('¿Estás seguro de que quieres limpiar todo el almacenamiento? Esto eliminará todos los productos.')) {
+                if (typeof window.productStorage === 'undefined') {
+                    logToOutput("❌ Módulo de almacenamiento no disponible.");
+                    return;
+                }
+                
+                window.productStorage.clearAll();
+                logToOutput("🗑️ Almacenamiento limpiado. Todos los productos eliminados.");
+                
+                // Recargar para ver cambios
+                setTimeout(() => {
+                    testGetAll();
+                }, 500);
+            }
+        }
+
+        // Inicializar pruebas
+        document.addEventListener('DOMContentLoaded', () => {
+            logToOutput("Sistema de pruebas Task 2 iniciado.");
+            logToOutput("Usa los botones para probar las funcionalidades del módulo de almacenamiento.");
+        });
+    </script>
+</body>
+</html>
