@@ -67,12 +67,6 @@ class RecipesUI {
                 recipes = await window.recipeSystem.analyzeInventoryAndSuggestRecipes();
             }
 
-            if (recipes.length === 0) {
-                if (window.recipeSystem) {
-                    recipes = window.recipeSystem.getFallbackRecipes();
-                }
-            }
-
             this.isLoading = false;
             
             // Mostrar resumen de inventario + recetas
@@ -82,10 +76,16 @@ class RecipesUI {
             console.error('❌ Error cargando sugerencias:', error);
             this.isLoading = false;
 
-            if (window.recipeSystem) {
-                const fallback = window.recipeSystem.getFallbackRecipes();
-                this.renderSuggestionsWithInventory(fallback);
-            }
+            contentEl.innerHTML = `
+                <div class="recipes-empty">
+                    <div class="empty-icon">🔌</div>
+                    <h3>Error al cargar recetas</h3>
+                    <p>No se pudieron obtener sugerencias. Verifica tu conexión a internet.</p>
+                    <button class="btn-primary" onclick="window.recipesUI.loadSuggestions()">
+                        🔄 Reintentar
+                    </button>
+                </div>
+            `;
         }
     }
 
