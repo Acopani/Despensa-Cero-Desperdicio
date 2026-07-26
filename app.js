@@ -1,4 +1,5 @@
-// Versión corregida de app.js - Sin problemas de carga
+// app.js - Lógica principal de la aplicación Despensa Cero Desperdicio
+// Actualizado para usar el sistema de almacenamiento storage.js
 
 // Variables globales
 let products = [];
@@ -16,144 +17,149 @@ const addFirstProductBtn = document.getElementById('add-first-product');
 const scanBtn = document.getElementById('scan-btn');
 const homeBtn = document.getElementById('home-btn');
 const recipesBtn = document.getElementById('recipes-btn');
-const alertsBtn = document.getElementById('alerts-btn');
 
 // Variables para modales
 let currentModal = null;
 
-// Inicializar la aplicación (versión segura)
+// Inicializar la aplicación
 async function initializeApp() {
-    console.log('🚀 Inicializando aplicación...');
+    console.log('Inicializando aplicación...');
     
     try {
-        // Mostrar la aplicación después de un breve delay
+        // Verificar si el módulo de almacenamiento está disponible
+        if (typeof window.productStorage === 'undefined') {
+            throw new Error('Módulo de almacenamiento no disponible');
+        }
+        
+        // Cargar datos desde localStorage
+        await loadProductsFromStorage();
+        
+        // Ocultar pantalla de carga y mostrar la aplicación
         setTimeout(() => {
-            if (loadingElement) loadingElement.style.display = 'none';
-            if (appElement) appElement.style.display = 'block';
+            loadingElement.style.display = 'none';
+            appElement.style.display = 'block';
             isAppInitialized = true;
             
-            console.log('✅ Aplicación visible');
+            // Actualizar interfaz
+            updateSummary();
+            renderProductsList();
             
-            // Cargar datos si storage está disponible
-            if (window.productStorage) {
+            console.log('Aplicación inicializada correctamente');
+            
+            // Mostrar estadísticas en consola
+            const stats = window.productStorage.getStatistics();
+            console.log('Estadísticas:', stats);
+            
+            // Iniciar monitoreo en tiempo real de alertas (con manejo de errores)
+            setTimeout(() => {
                 try {
-                    products = window.productStorage.getAll();
-                    updateSummary();
-                    renderProductsList();
-                    console.log(`📦 ${products.length} productos cargados`);
+                    if (window.expirationAlerts && typeof window.expirationAlerts.startRealTimeMonitoring === 'function') {
+                        window.expirationAlerts.startRealTimeMonitoring();
+                        console.log('Monitoreo de alertas iniciado');
+                    }
                 } catch (error) {
-                    console.warn('⚠️ Error cargando productos:', error);
+                    console.warn('No se pudo iniciar monitoreo de alertas:', error);
                 }
-            }
+            }, 1000);
             
-            // Configurar navegación
-            setupNavigation();
+            // Mostrar notificaciones locales si hay productos críticos
+            setTimeout(() => {
+                try {
+                    if (window.expirationAlerts && typeof window.expirationAlerts.showLocalNotifications === 'function') {
+                        window.expirationAlerts.showLocalNotifications();
+                    }
+                } catch (error) {
+                    console.warn('No se pudieron mostrar notificaciones:', error);
+                }
+            }, 3000);
             
-            // Iniciar sistema de alertas de forma segura
-            startAlertsSystemSafely();
-            
-        }, 300);
+        }, 800);
         
     } catch (error) {
-        console.error('❌ Error en initializeApp:', error);
-        
-        // Forzar mostrar la aplicación de todos modos
-        if (loadingElement) loadingElement.style.display = 'none';
-        if (appElement) appElement.style.display = 'block';
+        console.error('Error inicializando aplicación:', error);
+        showError('Error al cargar la aplicación. Por favor, recarga la página.');
     }
 }
 
-// Iniciar sistema de alertas de forma segura
-function startAlertsSystemSafely() {
-    setTimeout(() => {
-        try {
-            if (window.expirationAlerts && typeof window.expirationAlerts.startRealTimeMonitoring === 'function') {
-                window.expirationAlerts.startRealTimeMonitoring();
-                console.log('🔔 Monitoreo de alertas iniciado');
-            }
-        } catch (error) {
-            console.warn('⚠️ No se pudo iniciar monitoreo de alertas:', error);
-        }
-    }, 1000);
-    
-    // Notificaciones locales (con más delay)
-    setTimeout(() => {
-        try {
-            if (window.expirationAlerts && typeof window.expirationAlerts.showLocalNotifications === 'function') {
-                window.expirationAlerts.showLocalNotifications();
-            }
-        } catch (error) {
-            console.warn('⚠️ No se pudieron mostrar notificaciones:', error);
-        }
-    }, 2000);
-}
-
-// Cargar productos desde el almacenamiento (método seguro)
+// Cargar productos desde el almacenamiento
 async function loadProductsFromStorage() {
-    console.log('📥 Cargando productos...');
+    console.log('Cargando productos desde almacenamiento...');
     
     if (window.productStorage) {
-        try {
+        products = window.productStorage.getAll();
+        console.log(`Productos cargados: ${products.length}`);
+        
+        // Si no hay productos, añadir datos de ejemplo para desarrollo
+        if (products.length === 0 && window.location.hostname === 'localhost') {
+            console.log('Añadiendo datos de ejemplo para desarrollo...');
+            await addSampleProducts();
             products = window.productStorage.getAll();
-            console.log(`✅ ${products.length} productos cargados`);
-            
-            // Datos de ejemplo solo en desarrollo local
-            if (products.length === 0 && window.location.hostname === 'localhost') {
-                console.log('➕ Añadiendo datos de ejemplo...');
-                await addSampleProducts();
-                products = window.productStorage.getAll();
-            }
-            
-            return products;
-        } catch (error) {
-            console.error('❌ Error cargando productos:', error);
-            return [];
         }
     } else {
-        console.warn('⚠️ productStorage no disponible');
-        return [];
+        throw new Error('Sistema de almacenamiento no disponible');
     }
+    
+    return products;
 }
 
-// Añadir productos de ejemplo (solo para desarrollo)
+// Añadir productos de ejemplo para desarrollo
 async function addSampleProducts() {
-    if (!window.productStorage) return;
-    
     const sampleProducts = [
         {
             name: 'Manzanas Fuji',
             quantity: 5,
-            expiryDate: getDateString(3),
+            expiryDate: getDateString(3), // 3 días en el futuro
             category: 'Frutas',
             notes: 'Comprar en el mercado local'
         },
         {
             name: 'Leche Entera',
             quantity: 1,
-            expiryDate: getDateString(-1),
+            expiryDate: getDateString(-1), // 1 día en el pasado (vencido)
             category: 'Lácteos',
             notes: 'Cartón de 1L'
         },
         {
             name: 'Pan Integral',
             quantity: 2,
-            expiryDate: getDateString(1),
+            expiryDate: getDateString(1), // 1 día en el futuro
             category: 'Panadería',
             notes: 'Pan de molde'
         },
         {
             name: 'Tomates',
             quantity: 6,
-            expiryDate: getDateString(7),
+            expiryDate: getDateString(7), // 7 días en el futuro
             category: 'Verduras',
             notes: 'Tomate cherry'
         },
         {
             name: 'Arroz Integral',
             quantity: 1,
-            expiryDate: getDateString(30),
+            expiryDate: getDateString(30), // 30 días en el futuro
             category: 'Granos',
             notes: 'Paquete de 1kg'
+        },
+        {
+            name: 'Yogur Natural',
+            quantity: 4,
+            expiryDate: getDateString(4), // 4 días en el futuro
+            category: 'Lácteos',
+            notes: 'Envase de 125g'
+        },
+        {
+            name: 'Queso Cheddar',
+            quantity: 1,
+            expiryDate: getDateString(10), // 10 días en el futuro
+            category: 'Lácteos',
+            notes: 'Queso en lonchas'
+        },
+        {
+            name: 'Huevos',
+            quantity: 12,
+            expiryDate: getDateString(14), // 14 días en el futuro
+            category: 'Otros',
+            notes: 'Docena de huevos'
         }
     ];
     
@@ -161,9 +167,18 @@ async function addSampleProducts() {
         try {
             window.productStorage.add(product);
         } catch (error) {
-            console.warn('⚠️ Error añadiendo producto de ejemplo:', error);
+            console.error('Error añadiendo producto de ejemplo:', error);
         }
     });
+    
+    console.log(`${sampleProducts.length} productos de ejemplo añadidos`);
+}
+
+// Helper: obtener fecha formateada con offset de días
+function getDateString(daysOffset) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
 }
 
 // Actualizar resumen en la interfaz
@@ -171,205 +186,411 @@ function updateSummary() {
     if (!isAppInitialized) return;
     
     try {
-        // Usar sistema de alertas si está disponible
+        // Usar sistema de alertas para calcular estados
         if (window.expirationAlerts && window.productStorage) {
             const products = window.productStorage.getAllProducts();
             const analysis = window.expirationAlerts.analyzeAllProducts();
             
-            if (totalProductsElement) totalProductsElement.textContent = products.length;
-            if (urgentProductsElement) urgentProductsElement.textContent = analysis.criticalProducts.length;
-            if (warningProductsElement) warningProductsElement.textContent = analysis.warningProducts.length + analysis.expiredProducts.length;
+            // Actualizar elementos del DOM
+            totalProductsElement.textContent = products.length;
+            urgentProductsElement.textContent = analysis.criticalProducts.length;
+            warningProductsElement.textContent = analysis.warningProducts.length + analysis.expiredProducts.length;
             
+            // Actualizar colores de las tarjetas basados en alertas
             updateSummaryCardColors();
+            
+            // Actualizar indicador de alertas en el footer si existe
             updateAlertsIndicator(analysis);
             
         } else if (window.productStorage) {
             // Fallback al sistema anterior
             const summary = window.productStorage.getSummary();
             
-            if (totalProductsElement) totalProductsElement.textContent = summary.total;
-            if (urgentProductsElement) urgentProductsElement.textContent = summary.urgent;
-            if (warningProductsElement) warningProductsElement.textContent = summary.warning;
+            totalProductsElement.textContent = summary.total;
+            urgentProductsElement.textContent = summary.urgent;
+            warningProductsElement.textContent = summary.warning;
             
             updateSummaryCardColors();
         } else {
-            // Fallback básico
-            if (totalProductsElement) totalProductsElement.textContent = products.length;
-            if (urgentProductsElement) urgentProductsElement.textContent = 0;
-            if (warningProductsElement) warningProductsElement.textContent = 0;
+            // Fallback a cálculo manual
+            const today = new Date();
+            let urgentCount = 0;
+            let warningCount = 0;
+            
+            products.forEach(product => {
+                if (product.expiryStatus === 'urgent') {
+                    urgentCount++;
+                } else if (product.expiryStatus === 'warning') {
+                    warningCount++;
+                }
+            });
+            
+            totalProductsElement.textContent = products.length;
+            urgentProductsElement.textContent = urgentCount;
+            warningProductsElement.textContent = warningCount;
             
             updateSummaryCardColors();
         }
     } catch (error) {
-        console.warn('⚠️ Error actualizando resumen:', error);
-        
-        // Fallback mínimo
-        if (totalProductsElement) totalProductsElement.textContent = products.length || 0;
+        console.error('Error actualizando resumen:', error);
+        // Fallback básico
+        if (totalProductsElement && products) {
+            totalProductsElement.textContent = products.length;
+        }
         updateSummaryCardColors();
-    }
-}
-
-// Actualizar indicador de alertas
-function updateAlertsIndicator(analysis) {
-    const alertsBadge = document.getElementById('alerts-badge');
-    if (!alertsBadge) return;
-    
-    try {
-        const totalAlerts = analysis.criticalProducts.length + 
-                           analysis.warningProducts.length + 
-                           analysis.expiredProducts.length;
-        
-        if (totalAlerts > 0) {
-            alertsBadge.textContent = totalAlerts > 99 ? '99+' : totalAlerts;
-            alertsBadge.classList.remove('hidden');
-        } else {
-            alertsBadge.classList.add('hidden');
-        }
-    } catch (error) {
-        console.warn('⚠️ Error actualizando indicador de alertas:', error);
     }
 }
 
 // Actualizar colores de las tarjetas de resumen
 function updateSummaryCardColors() {
-    try {
-        const cards = document.querySelectorAll('.summary-card');
-        cards.forEach(card => {
-            const valueElement = card.querySelector('.card-value');
-            if (valueElement) {
-                const value = parseInt(valueElement.textContent) || 0;
-                if (value > 0) {
-                    card.style.backgroundColor = 'rgba(255, 152, 0, 0.1)';
-                    card.style.borderLeftColor = '#FF9800';
-                } else {
-                    card.style.backgroundColor = '';
-                    card.style.borderLeftColor = '';
-                }
-            }
-        });
-    } catch (error) {
-        console.warn('⚠️ Error actualizando colores de tarjetas:', error);
+    const urgentCard = document.querySelector('.summary-card.urgent');
+    const warningCard = document.querySelector('.summary-card.warning');
+    
+    if (urgentCard) {
+        const urgentCount = parseInt(urgentProductsElement.textContent);
+        if (urgentCount > 0) {
+            urgentCard.style.backgroundColor = 'var(--danger-color)';
+            urgentCard.style.color = 'white';
+        } else {
+            urgentCard.style.backgroundColor = '';
+            urgentCard.style.color = '';
+        }
+    }
+    
+    if (warningCard) {
+        const warningCount = parseInt(warningProductsElement.textContent);
+        if (warningCount > 0) {
+            warningCard.style.backgroundColor = 'var(--warning-color)';
+            warningCard.style.color = 'white';
+        } else {
+            warningCard.style.backgroundColor = '';
+            warningCard.style.color = '';
+        }
     }
 }
 
 // Renderizar lista de productos
 function renderProductsList() {
-    if (!productsListElement) return;
+    if (!productsListElement || !isAppInitialized) return;
     
-    try {
-        if (!products || products.length === 0) {
-            productsListElement.innerHTML = `
-                <div class="empty-state">
-                    <p>No hay productos en tu despensa aún</p>
-                    <button id="add-first-product" class="btn-primary">Añadir primer producto</button>
-                </div>
-            `;
-            
-            // Configurar botón de añadir primer producto
-            const addFirstBtn = document.getElementById('add-first-product');
-            if (addFirstBtn) {
-                addFirstBtn.addEventListener('click', openManualForm);
-            }
-            
-            return;
-        }
-        
-        let html = '';
-        
-        products.forEach(product => {
-            const statusClass = getProductStatusClass(product);
-            const statusLabel = getStatusLabel(product);
-            
-            html += `
-                <div class="product-card">
-                    <div class="product-card-header">
-                        <h3 class="product-name">${escapeHtml(product.name || 'Producto sin nombre')}</h3>
-                        <span class="product-quantity">${product.quantity || 1} unidades</span>
-                    </div>
-                    <div class="product-card-details">
-                        <p class="product-category">${escapeHtml(product.category || 'Sin categoría')}</p>
-                        ${product.expiryDate ? `<p class="product-expiry">Vence: ${product.expiryDate}</p>` : ''}
-                        ${product.notes ? `<p class="product-notes">${escapeHtml(product.notes)}</p>` : ''}
-                    </div>
-                    <div class="product-status ${statusClass}">
-                        ${statusLabel}
-                    </div>
-                    <div class="product-card-actions">
-                        <button class="btn btn-small" onclick="deleteProduct('${product.id}')">
-                            Eliminar
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        
-        productsListElement.innerHTML = html;
-        
-    } catch (error) {
-        console.error('❌ Error renderizando lista de productos:', error);
+    if (products.length === 0) {
         productsListElement.innerHTML = `
             <div class="empty-state">
-                <p>Error cargando productos. Intenta recargar la página.</p>
+                <p>No hay productos en tu despensa aún</p>
+                <button id="add-first-product" class="btn-primary">Añadir primer producto</button>
             </div>
         `;
-    }
-}
-
-// Obtener clase de estado del producto
-function getProductStatusClass(product) {
-    if (!product.expiryDate) return 'unknown';
-    
-    try {
-        const today = new Date();
-        const expDate = new Date(product.expiryDate);
-        const daysDiff = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
         
-        if (daysDiff < 0) return 'expired';
-        if (daysDiff <= 3) return 'urgent';
-        if (daysDiff <= 7) return 'warning';
-        return 'fresh';
-    } catch (error) {
-        return 'unknown';
+        // Re-asignar evento al botón
+        const newAddFirstBtn = document.getElementById('add-first-product');
+        if (newAddFirstBtn) {
+            newAddFirstBtn.addEventListener('click', handleAddProduct);
+        }
+        
+        return;
     }
-}
-
-// Obtener etiqueta de estado
-function getStatusLabel(product) {
-    const statusClass = getProductStatusClass(product);
     
-    switch (statusClass) {
-        case 'expired': return '⌛ Vencido';
-        case 'urgent': return '🔥 Urgente';
-        case 'warning': return '⚠️ Próximo';
-        case 'fresh': return '🍃 Fresco';
-        default: return '❓ Desconocido';
+    // Ordenar productos por fecha de expiración (más próximos primero)
+    const sortedProducts = [...products].sort((a, b) => {
+        const dateA = a.expiryDate ? new Date(a.expiryDate) : new Date(9999, 11, 31);
+        const dateB = b.expiryDate ? new Date(b.expiryDate) : new Date(9999, 11, 31);
+        return dateA - dateB;
+    });
+    
+    // Crear HTML de productos
+    let productsHTML = '';
+    
+    sortedProducts.forEach(product => {
+        const expiryDate = product.expiryDate ? new Date(product.expiryDate) : null;
+        
+        // Determinar clase CSS según estado
+        let statusClass = product.expiryStatus || 'safe';
+        let statusText = getStatusText(product.expiryStatus);
+        
+        // Formatear fecha legible
+        let formattedDate = 'Sin fecha';
+        if (expiryDate) {
+            formattedDate = expiryDate.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short',
+                year: expiryDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+            });
+        }
+        
+        // Formatear días restantes
+        let daysText = '';
+        if (product.daysUntil !== null && product.daysUntil !== undefined) {
+            if (product.daysUntil < 0) {
+                daysText = `Hace ${Math.abs(product.daysUntil)} días`;
+            } else if (product.daysUntil === 0) {
+                daysText = 'Hoy';
+            } else {
+                daysText = `En ${product.daysUntil} día${product.daysUntil !== 1 ? 's' : ''}`;
+            }
+        }
+        
+        productsHTML += `
+            <div class="product-card ${statusClass}" data-id="${product.id}">
+                <div class="product-card-header">
+                    <h3 class="product-name">${escapeHtml(product.name)}</h3>
+                    <span class="product-quantity">${product.quantity} unidad${product.quantity !== 1 ? 'es' : ''}</span>
+                </div>
+                <div class="product-card-content">
+                    <p class="product-category">${escapeHtml(product.category)}</p>
+                    <p class="product-expiry">
+                        <strong>Caduca:</strong> ${formattedDate}
+                        <span class="product-status ${statusClass}">${statusText} ${daysText ? `(${daysText})` : ''}</span>
+                    </p>
+                    ${product.notes ? `<p class="product-notes"><em>${escapeHtml(product.notes)}</em></p>` : ''}
+                </div>
+                <div class="product-card-actions">
+                    <button class="btn-secondary edit-product" data-id="${product.id}">Editar</button>
+                    <button class="btn-secondary delete-product" data-id="${product.id}">Eliminar</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    productsListElement.innerHTML = productsHTML;
+    
+    // Añadir eventos a los botones de productos
+    attachProductEvents();
+}
+
+// Obtener texto para estado
+function getStatusText(status) {
+    switch (status) {
+        case 'urgent': return 'Urgente';
+        case 'warning': return 'Próximo';
+        case 'expired': return 'Vencido';
+        case 'safe': return 'En buen estado';
+        default: return 'Sin fecha';
     }
 }
 
-// Función para eliminar producto
-window.deleteProduct = function(productId) {
-    if (window.productStorage && confirm('¿Eliminar este producto?')) {
-        try {
-            window.productStorage.remove(productId);
-            products = window.productStorage.getAll();
+// Escapar HTML para seguridad
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Añadir eventos a los botones de productos
+function attachProductEvents() {
+    const editButtons = document.querySelectorAll('.edit-product');
+    const deleteButtons = document.querySelectorAll('.delete-product');
+    
+    editButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const productId = e.target.dataset.id;
+            console.log('Editar producto:', productId);
+            showEditProductModal(productId);
+        });
+    });
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const productId = e.target.dataset.id;
+            if (confirm('¿Eliminar este producto?')) {
+                deleteProduct(productId);
+            }
+        });
+    });
+}
+
+// Eliminar producto
+function deleteProduct(productId) {
+    try {
+        if (window.productStorage) {
+            const deletedProduct = window.productStorage.remove(productId);
+            
+            // Actualizar lista local
+            products = products.filter(product => product.id !== productId);
+            
+            // Actualizar interfaz
             updateSummary();
             renderProductsList();
-            showToast('Producto eliminado');
-        } catch (error) {
-            console.error('❌ Error eliminando producto:', error);
-            showToast('Error al eliminar producto');
+            
+            showToast(`Producto "${deletedProduct.name}" eliminado`);
+            
+        } else {
+            throw new Error('Sistema de almacenamiento no disponible');
         }
+        
+    } catch (error) {
+        console.error('Error eliminando producto:', error);
+        showError('Error al eliminar el producto');
     }
-};
+}
 
-// Configurar navegación
-function setupNavigation() {
-    console.log('🔧 Configurando navegación...');
+// Mostrar modal para añadir producto
+function handleAddProduct() {
+    console.log('Mostrar modal para añadir producto');
+    openManualForm();
+}
+
+// Mostrar modal para añadir producto (alias para compatibilidad)
+function showAddProductModal() {
+    openManualForm();
+}
+
+// Mostrar modal para editar producto (simplificado - abre formulario manual con datos)
+function showEditProductModal(productId) {
+    const product = window.productStorage.getById(productId);
+    if (!product) {
+        showError('Producto no encontrado');
+        return;
+    }
     
-    // Botón de alertas
+    // Crear un formulario simple de edición
+    const modalHTML = `
+        <div class="modal-overlay" id="edit-product-modal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title">Editar Producto</h2>
+                    <button class="modal-close" onclick="closeModal()">×</button>
+                </div>
+                <div class="modal-content">
+                    <div style="text-align: center; padding: var(--spacing-xl);">
+                        <p style="margin-bottom: var(--spacing-lg);">
+                            Estás editando: <strong>${escapeHtml(product.name)}</strong>
+                        </p>
+                        <p style="color: var(--text-light); margin-bottom: var(--spacing-xl);">
+                            La funcionalidad completa de edición estará disponible en la siguiente versión.
+                            Por ahora, puedes eliminar y volver a añadir el producto.
+                        </p>
+                        <div style="display: flex; gap: var(--spacing-md); justify-content: center;">
+                            <button class="btn-secondary" onclick="closeModal()">
+                                Cancelar
+                            </button>
+                            <button class="btn-primary" onclick="editProductByReadding(${JSON.stringify(productId)})">
+                                Editar (Beta)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Insertar modal en el contenedor
+    const modalsContainer = document.getElementById('modals-container');
+    modalsContainer.innerHTML = modalHTML;
+    
+    // Guardar referencia al modal actual
+    currentModal = 'edit-product-modal';
+}
+
+// Función temporal para editar producto (beta)
+function editProductByReadding(productId) {
+    const product = window.productStorage.getById(productId);
+    if (!product) {
+        showError('Producto no encontrado');
+        return;
+    }
+    
+    // Cerrar modal actual
+    closeModal();
+    
+    // Eliminar producto actual
+    window.productStorage.remove(productId);
+    
+    // Abrir formulario manual con datos del producto
+    setTimeout(() => {
+        if (typeof window.openManualForm === 'function') {
+            window.openManualForm(product.barcode, {
+                name: product.name,
+                quantity: product.quantity,
+                category: product.category,
+                expiryDate: product.expiryDate,
+                notes: product.notes
+            });
+        } else {
+            showError('Funcionalidad de edición no disponible temporalmente');
+        }
+    }, 300);
+}
+
+// Cerrar modal actual
+function closeModal() {
+    const modalsContainer = document.getElementById('modals-container');
+    modalsContainer.innerHTML = '';
+    currentModal = null;
+}
+
+// Mostrar toast notification
+function showToast(message, duration = 3000) {
+    // Usar la función del register-sw.js si está disponible
+    if (typeof window.showToast === 'function') {
+        window.showToast(message, duration);
+        return;
+    }
+    
+    // Implementación básica como fallback
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease forwards';
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, duration);
+}
+
+// Mostrar error
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: var(--danger-color);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 8px;
+        z-index: 1000;
+        animation: slideUp 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    `;
+    
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        errorDiv.style.animation = 'slideDown 0.3s ease forwards';
+        setTimeout(() => {
+            document.body.removeChild(errorDiv);
+        }, 300);
+    }, 5000);
+}
+
+// Manejar botones de navegación
+function setupNavigation() {
+    // Configurar botón de alertas
+    const alertsBtn = document.getElementById('alerts-btn');
     if (alertsBtn) {
         alertsBtn.addEventListener('click', () => {
-            if (window.expirationAlerts && typeof window.expirationAlerts.showCriticalDashboard === 'function') {
+            console.log('Abrir dashboard de alertas');
+            if (window.expirationAlerts) {
                 window.expirationAlerts.showCriticalDashboard();
             } else {
                 showToast('Sistema de alertas no disponible');
@@ -377,133 +598,155 @@ function setupNavigation() {
         });
     }
     
-    // Botón de escaneo
-    if (scanBtn) {
-        scanBtn.addEventListener('click', () => {
-            if (window.scanner && typeof window.scanner.showScannerModal === 'function') {
-                window.scanner.showScannerModal();
-            } else {
-                openManualForm();
-            }
-        });
-    }
+    scanBtn.addEventListener('click', () => {
+        console.log('Abrir escáner de código de barras');
+        openScanner();
+    });
     
-    // Botón de inicio
-    if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
-            if (window.productStorage) {
-                products = window.productStorage.getAll();
-                updateSummary();
-                renderProductsList();
-                showToast('Datos actualizados');
-            }
-        });
-    }
-    
-    // Botón de recetas
-    if (recipesBtn) {
-        recipesBtn.addEventListener('click', () => {
-            showToast('Funcionalidad de recetas disponible en Task 6');
-        });
-    }
-    
-    // Botón de añadir producto (header)
-    if (addProductBtn) {
-        addProductBtn.addEventListener('click', openManualForm);
-    }
-}
-
-// Abrir formulario manual
-function openManualForm() {
-    if (typeof window.openManualForm === 'function') {
-        window.openManualForm();
-    } else {
-        showToast('Formulario manual no disponible');
-    }
-}
-
-// Abrir escáner
-function openScanner() {
-    if (window.scanner && typeof window.scanner.showScannerModal === 'function') {
-        window.scanner.showScannerModal();
-    } else {
-        openManualForm();
-    }
-}
-
-// Mostrar toast
-function showToast(message) {
-    console.log('���� Toast:', message);
-    
-    try {
-        // Usar sistema de toast existente o crear uno simple
-        let toast = document.getElementById('toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'toast';
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 80px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 12px 24px;
-                border-radius: 6px;
-                z-index: 1000;
-                opacity: 0;
-                transition: opacity 0.3s;
-                font-family: sans-serif;
-                white-space: nowrap;
-            `;
-            document.body.appendChild(toast);
-        }
-        
-        toast.textContent = message;
-        toast.style.opacity = '1';
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-        }, 3000);
-    } catch (error) {
-        console.warn('⚠️ Error mostrando toast:', error);
-    }
-}
-
-// Mostrar error
-function showError(message) {
-    console.error('❌ Error:', message);
-    alert(message);
-}
-
-// Función auxiliar para fechas
-function getDateString(daysOffset) {
-    const date = new Date();
-    date.setDate(date.getDate() + daysOffset);
-    return date.toISOString().split('T')[0];
-}
-
-// Función para escapar HTML
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOM Content Loaded - Iniciando aplicación');
-    initializeApp();
-});
-
-// Función global para actualizar lista de productos
-window.updateProductList = function() {
-    if (window.productStorage) {
+    homeBtn.addEventListener('click', () => {
+        console.log('Ir a inicio');
+        // Ya estamos en inicio, pero podemos recargar los datos
         products = window.productStorage.getAll();
         updateSummary();
         renderProductsList();
+        showToast('Datos actualizados');
+    });
+    
+    recipesBtn.addEventListener('click', () => {
+        console.log('Ver recetas');
+        if (window.recipesUI) {
+            window.recipesUI.showRecipesSection();
+        } else {
+            showToast('Sistema de recetas no disponible');
+        }
+    });
+}
+
+// Añadir CSS para animaciones de toast (si no existen)
+function ensureToastStyles() {
+    if (!document.querySelector('#toast-styles')) {
+        const style = document.createElement('style');
+        style.id = 'toast-styles';
+        style.textContent = `
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+            }
+            
+            @keyframes slideDown {
+                from {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(20px);
+                }
+            }
+            
+            @media (prefers-reduced-motion: reduce) {
+                @keyframes slideUp, @keyframes slideDown {
+                    from, to { opacity: 1; transform: none; }
+                }
+            }
+            
+            .product-notes {
+                font-size: 0.9em;
+                color: var(--text-light);
+                margin-top: 8px;
+                font-style: italic;
+            }
+        `;
+        document.head.appendChild(style);
     }
+}
+
+// Configurar eventos cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM cargado, configurando aplicación...');
+    
+    // Añadir estilos para toast
+    ensureToastStyles();
+    
+    // Configurar navegación
+    setupNavigation();
+    
+    // Configurar botones principales
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', handleAddProduct);
+    }
+    
+    if (addFirstProductBtn) {
+        addFirstProductBtn.addEventListener('click', handleAddProduct);
+    }
+    
+    // Inicializar la aplicación
+    initializeApp();
+    
+    // Hacer funciones globalmente disponibles
+    window.closeModal = closeModal;
+    window.handleAddProduct = handleAddProduct;
+});
+
+// Verificar estado offline/online
+window.addEventListener('online', () => {
+    showToast('Conectado a internet');
+});
+
+window.addEventListener('offline', () => {
+    showToast('Estás offline. La aplicación funciona localmente.', 5000);
+});
+
+// API Pública para otros módulos
+window.despensaApp = {
+    initializeApp,
+    updateSummary,
+    renderProductsList,
+    showToast,
+    showError,
+    handleAddProduct,
+    showAddProductModal,
+    showEditProductModal,
+    closeModal
 };
 
-console.log('✅ app.js cargado (versión corregida)');
+// Actualizar indicador de alertas en el footer
+function updateAlertsIndicator(analysis) {
+    const alertsBadge = document.getElementById('alerts-badge');
+    if (!alertsBadge) return;
+    
+    const totalAlerts = analysis.criticalProducts.length + 
+                       analysis.warningProducts.length + 
+                       analysis.expiredProducts.length;
+    
+    if (totalAlerts > 0) {
+        alertsBadge.textContent = totalAlerts > 99 ? '99+' : totalAlerts;
+        alertsBadge.classList.remove('hidden');
+    } else {
+        alertsBadge.classList.add('hidden');
+    }
+}
+
+// Agregar evento al botón de alertas
+function setupAlertsButton() {
+    const alertsBtn = document.getElementById('alerts-btn');
+    if (alertsBtn) {
+        alertsBtn.addEventListener('click', () => {
+            if (window.expirationAlerts) {
+                window.expirationAlerts.showCriticalDashboard();
+            }
+        });
+    }
+}
+
+// Función para actualizar la lista de productos
+window.updateProductList = function() {
+    renderProductsList();
+    updateSummary();
+};

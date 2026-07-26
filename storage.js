@@ -117,6 +117,11 @@ const storage = {
         }
     },
     
+    // Alias para compatibilidad con otros módulos
+    getAllProducts() {
+        return this.getAll();
+    },
+    
     // Obtener producto por ID
     getById(id) {
         const products = this.getAll();
@@ -636,62 +641,3 @@ const storage = {
 
 // Exportar como módulo global
 window.productStorage = storage.init();
-
-    },
-    
-    // Eliminar productos vencidos (para uso con el sistema de alertas)
-    removeExpiredProducts() {
-        try {
-            const products = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            const activeProducts = [];
-            const expiredProducts = [];
-            
-            products.forEach(product => {
-                if (product.expirationDate) {
-                    const expDate = new Date(product.expirationDate);
-                    expDate.setHours(0, 0, 0, 0);
-                    
-                    if (expDate < today) {
-                        expiredProducts.push(product);
-                    } else {
-                        activeProducts.push(product);
-                    }
-                } else {
-                    activeProducts.push(product);
-                }
-            });
-            
-            // Guardar productos activos
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(activeProducts));
-            
-            // Actualizar estadísticas
-            this.updateStatistics();
-            
-            console.log(`${expiredProducts.length} productos vencidos eliminados`);
-            
-            // Devolver información sobre los productos eliminados
-            return {
-                removed: expiredProducts,
-                remaining: activeProducts,
-                count: expiredProducts.length
-            };
-            
-        } catch (error) {
-            console.error('Error eliminando productos vencidos:', error);
-            return { removed: [], remaining: [], count: 0 };
-        }
-    },
-    
-    // Actualizar producto (compatibilidad con expiration-alerts)
-    updateProduct(id, productData) {
-        try {
-            return this.update(id, productData);
-        } catch (error) {
-            console.error('Error actualizando producto:', error);
-            throw error;
-        }
-    }
-};
