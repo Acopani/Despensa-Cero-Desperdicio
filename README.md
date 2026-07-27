@@ -1,6 +1,20 @@
 # Despensa Cero
 
-Aplicación web progresiva para administrar alimentos, controlar caducidades y generar recetas de aprovechamiento.
+> Control inteligente de alimentos para reducir el desperdicio doméstico.
+
+## Descripción breve
+
+Despensa Cero es una aplicación web progresiva para administrar los alimentos del hogar, controlar sus fechas de caducidad y generar recetas que ayuden a aprovechar los productos disponibles.
+
+## Reto que resolvemos
+
+En muchos hogares se desperdician alimentos porque las personas pierden de vista qué productos tienen almacenados y cuándo caducan. Además, no siempre saben cómo aprovechar los ingredientes próximos a vencer.
+
+Despensa Cero centraliza el inventario doméstico, identifica los alimentos que requieren atención, permite configurar alertas y propone recetas basadas en los productos disponibles. Así ayuda a reducir tanto el desperdicio de alimentos como el gasto doméstico asociado.
+
+## Repositorio público
+
+El código fuente y la documentación del proyecto están disponibles en [GitHub](https://github.com/Acopani/Despensa-Cero-Desperdicio).
 
 ## Funcionalidades
 
