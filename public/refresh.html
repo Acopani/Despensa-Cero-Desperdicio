@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Actualizando Despensa Cero</title>
+    <style>
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #faf9f9; color: #1a1c1c; }
+      main { text-align: center; padding: 2rem; }
+      h1 { color: #006e1c; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Actualizando Despensa Cero…</h1>
+      <p>Tus productos, recetas y ajustes se conservarán.</p>
+    </main>
+    <script>
+      (async () => {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.filter((key) => key.startsWith('despensa-cero-')).map((key) => caches.delete(key)));
+        }
+        location.replace(`/?app-refresh=${Date.now()}`);
+      })();
+    </script>
+  </body>
+</html>

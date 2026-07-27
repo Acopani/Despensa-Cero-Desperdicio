@@ -1,0 +1,13 @@
+{
+  "name": "Despensa Cero Desperdicio",
+  "short_name": "Despensa Cero",
+  "description": "Controla caducidades, aprovecha tus alimentos y reduce el desperdicio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf9f9",
+  "theme_color": "#006e1c",
+  "lang": "es",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

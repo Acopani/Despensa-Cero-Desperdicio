@@ -1,28 +1,8 @@
-# Variables de entorno con API keys
-env.js
-
-# Archivos de sistema
-.DS_Store
-Thumbs.db
-
-# Editor
-.vscode/
-*.swp
-*.swo
-
-# Backups
-*.backup
-
-# Node modules (si se usa en el futuro)
 node_modules/
-
-# Test files temporales
-debug-app.html
-test-*.html
-*-test.html
-diagnostic.js
-app-simple.js
-app.js.backup
-*.fixed
-start-test-server.js
-verificacion-aplicacion.md
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example

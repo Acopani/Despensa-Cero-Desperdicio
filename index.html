@@ -1,196 +1,21 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Meta tags PWA -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4CAF50">
-    <meta name="description" content="Gestiona tu inventario y reduce el desperdicio de alimentos">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/icon-192.svg">
-    <link rel="apple-touch-icon" href="assets/icon-192.svg">
-    
-    <!-- Critical CSS -->
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary-color: #4CAF50;
-            --primary-dark: #388E3C;
-            --primary-light: #C8E6C9;
-            --danger-color: #F44336;
-            --warning-color: #FF9800;
-            --safe-color: #4CAF50;
-            --text-color: #333333;
-            --text-light: #757575;
-            --bg-color: #F5F5F5;
-            --surface-color: #FFFFFF;
-            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-        
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-            text-align: center;
-        }
-        
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--primary-light);
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @media (prefers-reduced-motion: reduce) {
-            .loading-spinner {
-                animation: none;
-            }
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --text-color: #FFFFFF;
-                --text-light: #B0B0B0;
-                --bg-color: #121212;
-                --surface-color: #1E1E1E;
-                --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            }
-        }
-    </style>
-    
-    <!-- Main CSS -->
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="scanner.css">
-    
-    <title>Despensa Cero Desperdicio</title>
-</head>
-<body>
-    <!-- Loading screen -->
-    <div id="loading" class="loading" role="status" aria-live="polite" aria-label="Cargando aplicación">
-        <div class="loading-spinner" aria-hidden="true"></div>
-        <h1>Despensa Cero Desperdicio</h1>
-        <p>Cargando aplicación...</p>
-    </div>
-    
-    <!-- Main App Container -->
-    <div id="app" style="display: none;">
-        <!-- Header -->
-        <header class="app-header">
-            <h1 class="app-title">Despensa Cero Desperdicio</h1>
-            <div class="header-actions">
-                <button id="add-product-btn" class="btn-primary" aria-label="Añadir producto">
-                    <span>+</span> Añadir
-                </button>
-            </div>
-        </header>
-        
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Summary Cards -->
-            <section class="summary-section">
-                <div class="summary-card">
-                    <div class="summary-card-content">
-                        <h3>Total Productos</h3>
-                        <p id="total-products" class="summary-number">0</p>
-                    </div>
-                </div>
-                
-                <div class="summary-card urgent">
-                    <div class="summary-card-content">
-                        <h3>Urgentes</h3>
-                        <p id="urgent-products" class="summary-number">0</p>
-                    </div>
-                </div>
-                
-                <div class="summary-card warning">
-                    <div class="summary-card-content">
-                        <h3>Próximos</h3>
-                        <p id="warning-products" class="summary-number">0</p>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Product List -->
-            <section class="products-section">
-                <h2>Tu Inventario</h2>
-                <div id="products-list" class="products-list">
-                    <div class="empty-state">
-                        <p>No hay productos en tu despensa aún</p>
-                        <button id="add-first-product" class="btn-primary">Añadir primer producto</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Footer -->
-        <footer class="app-footer">
-            <nav aria-label="Navegación principal">
-            <button id="alerts-btn" class="footer-btn" aria-label="Alertas de expiración">
-                <span aria-hidden="true">🔔</span>
-                <span>Alertas</span>
-                <span id="alerts-badge" class="alerts-badge hidden" aria-label="Productos con alerta">0</span>
-            </button>
-            <button id="scan-btn" class="footer-btn" aria-label="Escanear código de barras">
-                <span aria-hidden="true">📷</span>
-                <span>Escanear</span>
-            </button>
-            <button id="home-btn" class="footer-btn active" aria-label="Inicio" aria-current="page">
-                <span aria-hidden="true">🏠</span>
-                <span>Inicio</span>
-            </button>
-            <button id="recipes-btn" class="footer-btn" aria-label="Recetas sugeridas">
-                <span aria-hidden="true">🍳</span>
-                <span>Recetas</span>
-            </button>
-            </nav>
-        </footer>
-        
-        <!-- Modals will be injected here -->
-        <div id="modals-container"></div>
-    </div>
-    
-    <!-- Environment Variables (NO subir a GitHub) -->
-    <script src="env.js"></script>
-    
-    <!-- JavaScript Files -->
-    <script src="lib/html5-qrcode.js" defer></script>
-    <script src="storage.js" defer></script>
-    <script src="expiration-alerts.js" defer></script>
-    <script src="scanner.js" defer></script>
-    <script src="manual-form.js" defer></script>
-    <script src="recipes.js" defer></script>
-    <script src="recipes-ui.js" defer></script>
-    <script src="app.js" defer></script>
-    <script src="register-sw.js" defer></script>
-</body>
+<!doctype html>
+<html lang="es" class="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Despensa Cero</title>
+    <meta name="description" content="Controla caducidades y reduce el desperdicio de alimentos." />
+    <meta name="theme-color" content="#006e1c" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-[#faf9f9] text-[#1a1c1c] font-sans antialiased selection:bg-[#4caf50] selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
+

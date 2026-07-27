@@ -1,165 +1,103 @@
-# 🍎 Despensa Cero Desperdicio
+# Despensa Cero
 
-Una aplicación PWA (Progressive Web App) para gestionar el inventario doméstico y reducir el desperdicio de alimentos. Desarrollada exclusivamente con tecnologías web nativas.
+Aplicación web progresiva para administrar alimentos, controlar caducidades y generar recetas de aprovechamiento.
 
-## 🚀 Características
+## Funcionalidades
 
-- **PWA 100% offline**: Instalable y funciona sin conexión a internet
-- **Escaneo de códigos de barras**: Usa la cámara del dispositivo para identificar productos
-- **Gestión de inventario**: Añade, edita y elimina productos manualmente
-- **Alertas inteligentes**: Notifica sobre productos próximos a caducar
-- **Generador de recetas**: Sugiere recetas basadas en productos urgentes usando IA
-- **100% en el navegador**: No requiere backend, todo funciona en localStorage
+- Inventario persistente en el navegador con estados de caducidad.
+- Alta manual y lectura de códigos de barras mediante Open Food Facts.
+- Selección de cámara y formulario manual cuando el escaneo no está disponible.
+- Alertas locales para productos próximos a caducar.
+- Recetas completas con Gemini y generador local cuando la IA no está disponible.
+- Historial de recetas con rotación para reducir recomendaciones repetitivas.
+- Tema claro/oscuro, funcionamiento sin conexión e instalación como PWA.
+- Migración de inventario y recetas guardados por versiones anteriores.
 
-## 📱 Tecnologías
+## Arquitectura y persistencia
 
-- **Frontend**: HTML5, CSS3, JavaScript vanilla (sin frameworks)
-- **PWA**: Service Workers, Web App Manifest, Cache API
-- **Almacenamiento**: localStorage exclusivamente
-- **APIs Externas**:
-  - Open Food Facts - Datos de productos por código de barras
-  - Hugging Face Inference API - Generación de recetas
-- **Hardware**: Webcam API para escaneo de códigos de barras
+El cliente utiliza React, TypeScript, Vite y Tailwind CSS. El servidor Express protege la clave de Gemini y sirve tanto la API como la compilación de producción.
 
-## 🏗️ Estructura del Proyecto
+El inventario, las preferencias y las recetas se guardan en `localStorage`. No existe autenticación remota ni sincronización entre dispositivos: cada navegador mantiene sus propios datos.
 
-```
-Despensa-Cero-Desperdicio/
-├── index.html          # Punto de entrada principal
-├── manifest.json       # Configuración PWA
-├── sw.js              # Service Worker
-├── register-sw.js     # Registro del Service Worker
-├── styles.css         # Estilos principales
-├── app.js             # Lógica principal de la aplicación
-├── README.md          # Documentación
-└── assets/            # Iconos y recursos
-    ├── icon-192.svg
-    ├── icon-512.svg
-    └── icon-maskable.svg
-```
+## Requisitos
 
-## 🛠️ Plan de Implementación
+- Node.js 20 o posterior.
+- Una clave de Gemini solo si se desean recetas generadas con IA.
+- HTTPS o `localhost` para utilizar cámara, notificaciones y PWA.
 
-### Task 1: ✅ Configuración del proyecto base y estructura PWA
-- [x] Crear estructura base del proyecto
-- [x] Configurar manifest.json para PWA
-- [x] Implementar Service Worker básico
-- [x] Crear iconos y assets
-- [x] Establecer estilos base mobile-first
+## Configuración local
 
-### Task 2: Sistema de almacenamiento local con localStorage
-- [ ] Implementar módulo storage.js
-- [ ] CRUD completo para productos
-- [ ] Esquema optimizado (<50KB para ~1000 productos)
-- [ ] Integración con interfaz principal
-
-### Task 3: Escaneo de códigos de barras con cámara web
-- [ ] Componente de cámara modal
-- [ ] Integración con Open Food Facts API
-- [ ] Manejo de errores y fallbacks
-- [ ] Cache local de productos escaneados
-
-### Task 4: Gestión manual de productos como fallback
-- [ ] Formulario de registro manual
-- [ ] Validaciones y autocomplete
-- [ ] UX optimizada para entrada rápida
-- [ ] Integración con almacenamiento
-
-### Task 5: Sistema de alertas de expiración locales
-- [ ] Cálculo de estado de expiración
-- [ ] Semaforización visual (verde/amarillo/rojo)
-- [ ] Notificaciones locales (Notification API)
-- [ ] Resumen de productos críticos
-
-### Task 6: Motor de sugerencias de recetas con Hugging Face
-- [ ] Integración con API Hugging Face
-- [ ] Generación de recetas basadas en productos urgentes
-- [ ] Cache de respuestas (24h)
-- [ ] Recetas predefinidas como fallback
-
-### Task 7: Refinamiento de UX/UI y responsive design
-- [ ] Optimizaciones de performance (Lighthouse)
-- [ ] Accesibilidad completa (WCAG)
-- [ ] Dark mode automático
-- [ ] Mejoras en UX para móviles
-
-## 📦 Instalación y Uso
-
-### Desarrollo Local
-1. Clona el repositorio:
-   ```bash
-   git clone https://github.com/tu-usuario/despensa-cero-desperdicio.git
+1. Instala las dependencias:
+   ```powershell
+   npm install
    ```
-
-2. Abre el proyecto en un servidor web local:
-   ```bash
-   # Usando Python
-   python -m http.server 8000
-   
-   # Usando Node.js (con http-server)
-   npx http-server
+2. Copia `.env.example` como `.env.local` y configura `GEMINI_API_KEY`.
+3. Inicia la aplicación:
+   ```powershell
+   npm run dev
    ```
+4. Abre `http://localhost:3000`.
 
-3. Accede a la aplicación en `http://localhost:8000`
+La clave de Gemini permanece en el servidor. Si no está configurada, el cliente utiliza el generador culinario local.
 
-### Instalación como PWA
-1. Abre la aplicación en Chrome/Edge
-2. Haz clic en el ícono de instalación en la barra de direcciones
-3. La aplicación se instalará en tu dispositivo
+## Comandos
 
-## 🌐 APIs Utilizadas
+| Comando | Uso |
+| --- | --- |
+| `npm run dev` | Inicia Express y Vite en desarrollo |
+| `npm run typecheck` | Comprueba los tipos de cliente y servidor |
+| `npm run lint` | Alias de la comprobación de TypeScript |
+| `npm run build` | Compila cliente y servidor en `dist/` |
+| `npm start` | Ejecuta la compilación de producción |
+| `npm run clean` | Elimina los artefactos de `dist/` |
 
-### Open Food Facts
-- **URL**: `https://world.openfoodfacts.org/api/v0/product/{barcode}.json`
-- **Propósito**: Obtener información de productos por código de barras
-- **Límites**: Gratuito, sin API key requerida
+## Estructura
 
-### Hugging Face Inference API
-- **URL**: `https://api-inference.huggingface.co/models/gpt2`
-- **Propósito**: Generar recetas basadas en ingredientes
-- **Configuración**: Requiere API key (limitaciones de uso gratuito)
-
-## 🔧 Configuración de Desarrollo
-
-### Variables de Entorno (para Task 6)
-Crea un archivo `.env` en la raíz del proyecto:
-
-```env
-# Clave de API para Hugging Face (Task 6)
-HUGGING_FACE_API_KEY=tu_clave_aqui
+```text
+despensa-cero/
+├── public/                       # PWA y utilidades de mantenimiento
+│   ├── icon.svg
+│   ├── manifest.webmanifest
+│   ├── refresh.html              # Renueva caché conservando datos
+│   ├── reset.html                # Borra inventario y recetas locales
+│   └── sw.js
+├── server/
+│   └── index.ts                  # API Express y conexión con Gemini
+├── src/
+│   ├── app/
+│   │   ├── App.tsx               # Composición y estado global
+│   │   └── defaultUser.ts        # Preferencias iniciales
+│   ├── features/
+│   │   ├── auth/                 # Bienvenida local
+│   │   ├── inventory/            # Inventario, formulario y persistencia
+│   │   ├── recipes/              # Generación, normalización y catálogo
+│   │   ├── scanner/              # Cámara y Open Food Facts
+│   │   └── settings/             # Perfil y preferencias
+│   ├── shared/
+│   │   ├── components/           # Diálogos reutilizables
+│   │   ├── layout/               # Navegación y encabezado
+│   │   └── services/             # Capacidades compartidas
+│   ├── index.css
+│   ├── main.tsx                  # Entrada del cliente y PWA
+│   └── types.ts                  # Contratos compartidos
+├── .env.example
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
 ```
 
-### Configuración del Service Worker
-- **Cache Strategy**: Cache-first para recursos locales, network-first para APIs
-- **Offline Support**: Página offline personalizada
-- **Push Notifications**: Configuradas para alertas de expiración
+`node_modules/` y `dist/` son artefactos generados y no forman parte del código fuente.
 
-## 📊 Métricas Objetivo (Lighthouse)
+## Mantenimiento local
 
-- **Performance**: >90
-- **Accessibility**: >90  
-- **Best Practices**: >90
-- **PWA**: >90
-- **SEO**: >90
+- `http://localhost:3000/refresh.html`: elimina service workers y cachés antiguas sin tocar inventario, recetas ni preferencias.
+- `http://localhost:3000/reset.html`: elimina inventario, recetas y cachés locales; conserva las preferencias del usuario.
 
-## 🤝 Contribución
+## Producción
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+```powershell
+npm run build
+npm start
+```
 
-## 📄 Licencia
-
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
-
-## 🙏 Agradecimientos
-
-- [Open Food Facts](https://world.openfoodfacts.org/) por la API de productos
-- [Hugging Face](https://huggingface.co/) por la API de inferencia de IA
-- Equipo de [Kiro IDE](https://kiro.dev/) por el entorno de desarrollo
-
----
-
-**Desarrollado con ❤️ para reducir el desperdicio de alimentos**
+Configura `NODE_ENV=production`, `GEMINI_API_KEY` y, si el proveedor lo requiere, `PORT`. El proveedor debe exponer la aplicación mediante HTTPS para habilitar cámara y notificaciones.
