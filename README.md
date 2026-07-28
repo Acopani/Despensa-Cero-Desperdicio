@@ -6,6 +6,8 @@ Aplicación web progresiva para administrar los alimentos del hogar, anticipar s
 
 **Hackathon Kiro — Equipo 71**
 
+Repositorio mantenido por [@Acopani](https://github.com/Acopani): [Acopani/Despensa-Cero-Desperdicio](https://github.com/Acopani/Despensa-Cero-Desperdicio).
+
 ## 🧭 ¿Por qué Kiro?
 
 Kiro no se utilizó únicamente para producir fragmentos aislados de código. Se incorporó como un agente de ingeniería capaz de recorrer el proyecto completo, relacionar la experiencia del usuario con la implementación y comprobar que el resultado estuviera listo para entregarse.
