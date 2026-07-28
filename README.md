@@ -2,35 +2,9 @@
 
 Aplicación web progresiva para administrar los alimentos del hogar, anticipar sus fechas de caducidad y convertir el inventario disponible en recetas de aprovechamiento. Despensa Cero combina registro manual, escaneo de códigos de barras, alertas locales y generación de recetas con IA para ayudar a reducir el desperdicio alimentario sin depender de una cuenta ni enviar el inventario a una base de datos remota.
 
-## 📋 Índice
-
-- 👥 Equipo
-- 🧭 ¿Por qué Kiro?
-  - Revisión integral del producto
-  - Ingeniería con visión de extremo a extremo
-  - Validación antes de cerrar cambios
-  - Documentación basada en evidencia
-- 🎯 Objetivos del proyecto
-- 🏆 Formulario de descripción del proyecto
-- ✨ Funcionalidades principales
-- 📋 Prerrequisitos
-- 🚀 Inicio rápido
-- 🎮 Ejecución
-- 📜 Scripts disponibles
-- 📁 Estructura del proyecto
-- 🏗️ Arquitectura y persistencia
-- 🛠️ Tecnologías
-- 🔐 Privacidad y seguridad
-- 🌐 Compatibilidad
-- 🧹 Mantenimiento local
-- 🤝 Contribuir
-- 📝 Licencia
-
 ## 👥 Equipo
 
-**Hackathon Kiro — Despensa Cero**
-
-Repositorio mantenido por [@Acopani](https://github.com/Acopani): [Acopani/Despensa-Cero-Desperdicio](https://github.com/Acopani/Despensa-Cero-Desperdicio).
+**Hackathon Kiro — Equipo 71**
 
 ## 🧭 ¿Por qué Kiro?
 
